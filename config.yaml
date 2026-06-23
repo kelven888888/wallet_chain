@@ -1,0 +1,61 @@
+captcha:
+  key-long: 4
+  img-width: 210
+  img-height: 76
+  open-captcha: 0
+  open-captcha-timeout: 3600
+casbin:
+  model-path: ./resource/rbac_model.conf
+excel:
+  dir: ./resource/excel/
+jwt:
+  signing-key: qmPlus
+  expires-time: 365d
+  buffer-time: 1d
+local:
+  path: uploads/file
+  store-path: uploads/file
+mysql:
+  path: 127.0.0.1:3306
+  config: charset=utf8mb4&parseTime=True&timeout=1000ms
+  loc: Asia/Shanghai
+  db-name: wallet_chain
+  username: root
+  password: root
+  max-idle-conns: 0
+  max-open-conns: 0
+  log-mode: false
+  log-zap: "error"
+redis:
+  db: 1
+  addr: 127.0.0.1:6379
+  password: "redispassworddavid"
+system:
+  env: debug
+  version: NQs
+  language: zh-hant
+  language_array: en,zh-hant,ml
+  admin_url : localhost:9000
+  pagesize: 20
+  addr: 9000
+  db-type: mysql
+  oss-type: local
+  use-multipoint: false
+  iplimit-count: 5
+  iplimit-time: 1
+  secret-key: 087DC8269428CD3BC4BB689C5EE9A148
+  web_api_url: "http://localhost:9000/"
+  aes_key: abcdefgh33433333
+  aes_iv: 12345678abcdefee
+  ai_td_acc: 803570063
+  POLYGON_API_KEY: xQcSLYDLQQgibRwKUImh2fCWQRpCKug2
+zap:
+  level: info
+  format: console
+  prefix: '[GIN-VUE-ADMIN]'
+  director: log
+  link-name: latest_log
+  showLine: true
+  encode-level: LowercaseColorLevelEncoder
+  stacktrace-key: stacktrace
+  log-in-console: true

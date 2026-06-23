@@ -1,0 +1,9 @@
+{
+  "成功": "Success",
+  "失败": "Fail",
+  "参数错误": "The stock market is closed and does not support market trading!",
+  "Please select the correct trading timeframe!": "Please select the correct trading timeframe!",
+  "The account is not linked to Twitter": "The account is not linked to Twitter"
+
+
+}

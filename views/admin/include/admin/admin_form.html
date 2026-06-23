@@ -1,0 +1,79 @@
+
+
+{{define "main"}}
+
+  <div class="layui-form" lay-filter="layuiadmin-form-admin" id="layuiadmin-form-admin" style="padding: 20px 30px 0 0;">
+
+    <input type="hidden" name="id"  class="layui-input" value="{{.admininfo.Id }}">
+    <div class="layui-form-item">
+      <label class="layui-form-label">登录名</label>
+      <div class="layui-input-inline">
+        <input type="text" name="account" lay-verify="required" placeholder="请输入用户名,*将会成为您唯一的登入名" autocomplete="off" class="layui-input" value="{{.admininfo.Account }}">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">手机</label>
+      <div class="layui-input-inline">
+        <input type="text" name="mobile"  placeholder="请输入号码，非必填" autocomplete="off" class="layui-input" value="{{.admininfo.Mobile }}">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">邮箱</label>
+      <div class="layui-input-inline">
+        <input type="text" name="mail"  placeholder="请输入邮箱,非必填" autocomplete="off" class="layui-input" value="{{.admininfo.Mail }}">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">密码</label>
+      <div class="layui-input-inline">
+        {{if  $.admininfo.Account  }}
+
+        <input type="text" name="password" placeholder="请输入密码,不修改为空" autocomplete="off" class="layui-input" >
+        {{else}}
+        <input type="text" lay-verify="required" name="password"  placeholder="请输入密码" autocomplete="off" class="layui-input" >
+      {{end}}
+      </div>
+    </div>
+  <!--  <div class="layui-form-item">
+      <label class="layui-form-label">角色</label>
+      <div class="layui-input-inline">
+        <input type="text" name="role" lay-verify="required" placeholder="请输入角色类型" autocomplete="off" class="layui-input" value="ddd">
+      </div>
+
+    </div>-->
+    <div class="layui-form-item">
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">角色</label>
+        <div class="layui-input-inline">
+          <select name="group_id" lay-verify="required">
+            <option value="">请选择角色</option>
+            {{range $v := .group}}
+            <option value={{str2int $v.Id}} {{if eq $v.Id $.admininfo.GroupId}}selected{{end}}>{{$v.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">启用状态</label>
+      <div class="layui-input-inline">
+        {{if .IsUpdate}}
+        <input type="radio" name="status" value="0" title="禁用"  {{if eqpoint .admininfo.Status 0 }} checked {{end}} >
+        <input type="radio" name="status" value="1" title="启用"  {{if eqpoint .admininfo.Status 1 }}  checked {{end}} >
+        {{else}}
+        <input type="radio" name="status" value="0" title="禁用"  >
+        <input type="radio" name="status" value="1" title="启用"  checked >
+        {{end}}
+      </div>
+    </div>
+    <div class="layui-form-item layui-hide">
+      <input type="button" lay-submit lay-filter="LAY-user-back-submit" id="LAY-user-back-submit"  value="submit">
+    </div>
+  </div>
+
+
+
+
+
+{{end}}

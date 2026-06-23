@@ -1,0 +1,143 @@
+{{define "main"}}
+<form class="layui-form" action="">
+  {{range $item := .language}}
+    <div class="layui-form-item">
+      <label class="layui-form-label">官网-{{$item.Name}}</label>
+      <div class="layui-input-block">
+        <img id="LAY_upload_{{$item.Code}}" width="150"
+             {{if StringMap2ValueEmpty $.poster.Website $item.Code}}
+             src="../../{{StringMap2Value $.poster.Website $item.Code}}"
+             {{end}}
+        >
+        <input type="hidden" id="upload_cover_{{$item.Code}}" name="website_{{$item.Code}}" {{if StringMap2ValueEmpty $.poster.Website $item.Code}} value="{{StringMap2Value $.poster.Website $item.Code}}" {{end}}>
+
+        <div class="layui-input-inline">
+          <div class="site-demo-upbar">
+            <button type="button" class="layui-btn layui-btn-primary" id="upimg_{{$item.Code}}">
+              <i class="layui-icon">&#xe67c;</i>上传图片
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{end}}
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">启用官网</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="enable_website" lay-skin="switch" {{if .poster.EnableWebsite}}checked{{end}} title="false|true" >
+    </div>
+  </div>
+
+  {{range $item := .language}}
+  <div class="layui-form-item">
+    <label class="layui-form-label">App-{{$item.Name}}</label>
+    <div class="layui-input-block">
+      <img id="LAY_upload2_{{$item.Code}}" width="150"
+           {{if StringMap2ValueEmpty $.poster.App $item.Code}}
+           src="../../{{StringMap2Value $.poster.App $item.Code}}"
+           {{end}}
+      >
+      <input type="hidden" id="upload_cover2_{{$item.Code}}" name="app_{{$item.Code}}" {{if StringMap2ValueEmpty $.poster.App $item.Code}} value="{{StringMap2Value $.poster.App $item.Code}}" {{end}}>
+
+      <div class="layui-input-inline">
+        <div class="site-demo-upbar">
+          <button type="button" class="layui-btn layui-btn-primary" id="upimg2_{{$item.Code}}">
+            <i class="layui-icon">&#xe67c;</i>上传图片
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{end}}
+  <div class="layui-form-item">
+    <label class="layui-form-label">启用APP</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="enable_app" lay-skin="switch" {{if .poster.EnableApp}}checked{{end}} title="false|true" >
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button type="submit" class="layui-btn" lay-submit lay-filter="set_poster">立即提交</button>
+    </div>
+  </div>
+</form>
+<script>
+  window.onload = function () {
+    layui.use(['form', 'laydate', 'util', 'upload'], function() {
+      var $ = layui.jquery;        // jquery
+      var form = layui.form;
+      var layer = layui.layer;
+      var laydate = layui.laydate;
+      {{range $item := .language}}
+        layui.upload.render({
+          elem: '#upimg_{{$item.Code}}',
+          // field: 'file',
+          url: '{{urlfor "PublicController.Upload?type=poster"}}',
+          done: function(res) { //上传成功后的回调
+            if (res.code == 200) {
+              $('#LAY_upload_{{$item.Code}}').attr('src',"../../"+ res.data.url);
+              $('#upload_cover_{{$item.Code}}').val(res.data.url);
+            } else {
+              layer.msg(res.msg, {icon: 3});
+            }
+          }
+        });
+      {{end}}
+      {{range $item := .language}}
+
+      layui.upload.render({
+        elem: '#upimg2_{{$item.Code}}',
+        // field: 'file',
+        url: '{{urlfor "PublicController.Upload?type=poster"}}',
+        done: function(res) { //上传成功后的回调
+          if (res.code == 200) {
+            $('#LAY_upload2_{{$item.Code}}').attr('src',"../../"+ res.data.url);
+            $('#upload_cover2_{{$item.Code}}').val(res.data.url);
+          } else {
+            layer.msg(res.msg, {icon: 3});
+          }
+        }
+      });
+      {{end}}
+
+
+      form.on('submit(set_poster)', function(data){
+        console.log(data.field)
+
+        const website = {}
+        {{range $item := .language}}
+          website['{{$item.Code}}'] = data.field['website_{{$item.Code}}']
+        {{end}}
+        const app = {}
+
+        {{range $item := .language}}
+        app['{{$item.Code}}'] = data.field['app_{{$item.Code}}']
+        {{end}}
+
+        const field = {website, app, enable_app: data.field.enable_app?true:false, enable_website: data.field.enable_website?true:false}; // 获取表单字段值
+        console.log(field)
+        $.ajax({
+          method: "post",
+          url: '{{urlfor "admin.SettingController.Poster"}}',
+          dataType: "json",
+          data: JSON.stringify(field),
+          contentType: "application/json",
+          success: (res) =>{
+            console.log(res)
+            if (res.code !== 200) {
+              layer.msg(res.msg)
+            }else{
+              layer.msg(res.msg)
+            }
+          }
+        })
+        return false; // 阻止默认 form 跳转
+      });
+
+    })
+  }
+</script>
+
+
+{{end}}

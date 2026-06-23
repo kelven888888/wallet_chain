@@ -1,0 +1,7 @@
+/log
+*.git
+.idea
+/.idea
+/tmp
+/uploads
+/storage

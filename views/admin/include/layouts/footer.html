@@ -1,0 +1,37 @@
+{{define "footer"}}
+<!-- JS部分 -->
+
+
+
+
+<script src="/resource/static/js/admin/x-layui.js" media="all"></script>
+<!--<script src="/resource/static/js/admin/x-admin.js?rand=4" media="all"></script>-->
+<script type="text/javascript">
+
+
+    var url = window.location.pathname.substring(1);
+
+    var item = url.split("/");
+    let arr1 = ['undefined', 'admin','adminlog','home','login','role']
+    const r1 = arr1.indexOf(item[1])
+    console.log(r1)
+    // var time = Date.parse(new Date())
+    var time=1
+    // $.cookie('x_iframe_url', window.location.href,{
+    //     domain: '/', // 替换为你的实际域名
+    //     path: '/', // 替换为你的实际路径
+    // });
+ if(r1!="-1"){
+
+     
+     var jsUrl = "/resource/module/easy_goadmin_" + item[1] + ".js?rand="+time;
+    document.write("<script src='" + jsUrl + "'><\/script>");
+ }
+    var jsUrl = "/resource/static/js/admin/x-layui.js?rand="+time;
+    document.write("<script src='" + jsUrl + "'><\/script>");
+    var jsUrl = "/resource/static/js/admin/x-admin.js?rand="+time;
+    document.write("<script src='" + jsUrl + "'><\/script>");
+   /* var $node = $('li[lay-id="1"] .layadmin-iframe').attr("src");
+    console.log($node)*/
+</script>
+{{end}}
