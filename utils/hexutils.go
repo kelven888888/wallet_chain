@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	EmptyString = &hexError{"empty hex string"}
+	EmptyStrings = &hexError{"empty hex string"}
 )
 
 type hexError struct {
@@ -26,7 +26,7 @@ func Encode(bytes []byte) string {
 // Decode hex string as bytes
 func Decode(input string) ([]byte, error) {
 	if len(input) == 0 {
-		return nil, EmptyString
+		return nil, EmptyStrings
 	}
 	return hex.DecodeString(input[:])
 }

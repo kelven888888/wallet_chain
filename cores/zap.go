@@ -1,4 +1,4 @@
-package core
+package cores
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"wallet_chain.com/core/internal"
+	"wallet_chain.com/cores/internal"
 	"wallet_chain.com/global"
 	"wallet_chain.com/utils"
 )

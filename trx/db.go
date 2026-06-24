@@ -3,7 +3,6 @@ package trx
 import (
 	"errors"
 	"gorm.io/gorm"
-	_ "modernc.org/sqlite"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -277,7 +276,7 @@ func (db *DB) InsertTransactions(transactions *Transactions) (int64, error) {
 // LoadLastBlockHeight 获取最后一次扫描高度 已经扫描到这个高度
 func (db *DB) LoadLastBlockHeight() (int64, error) {
 	var tmp OtherParam
-	err := global.SHOP_DB.Where("key='block'").Limit(1).Find(&tmp).Error
+	err := global.SHOP_DB.Where("'key'='block'").Limit(1).Find(&tmp).Error
 	if err != nil || tmp.Value == "0" {
 		return 0, errors.New("没用记录")
 	}

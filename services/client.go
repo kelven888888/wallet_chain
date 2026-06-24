@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 	"wallet_chain.com/api"
-	"wallet_chain.com/core"
+	core "wallet_chain.com/core"
 	"wallet_chain.com/utils"
 )
 

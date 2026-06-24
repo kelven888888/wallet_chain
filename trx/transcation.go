@@ -9,10 +9,9 @@ import (
 	"time"
 	"wallet_chain.com/api"
 	"wallet_chain.com/core"
+	service "wallet_chain.com/services"
 
 	"wallet_chain.com/log"
-	"wallet_chain.com/service"
-
 	wallet "wallet_chain.com/utils"
 
 	"github.com/ethereum/go-ethereum/common"

@@ -141,14 +141,14 @@ func Init() {
 	InitLog() // 首先初始化日志
 	InitMainNode(globalConf.Client.NodeTrx)
 	InitAllNode(globalConf.Client.NodeUrl)
-	InitContract(globalConf.Contracts)
+	InitContracts(globalConf.Contracts)
 	InitMainAndFee()
 	InitWalletInfo()
 	InitSeed()
-	task()
+	Task()
 }
 
-func task() {
+func Task() {
 	var scanT = globalConf.Scantraderecord.TimeIntervalSec
 	if scanT < 1 {
 		scanT = 60

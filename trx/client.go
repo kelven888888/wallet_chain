@@ -4,15 +4,14 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"github.com/smirkcat/hdwallet"
 	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"wallet_chain.com/log"
-	"wallet_chain.com/service"
-
-	"github.com/smirkcat/hdwallet"
+	"wallet_chain.com/services"
 
 	wallets "wallet_chain.com/utils"
 
@@ -41,7 +40,7 @@ const (
 )
 
 // InitContract 初始化所有合约
-func InitContract(contracts []Contract) {
+func InitContracts(contracts []Contract) {
 	for i, v := range contracts {
 		if ok := mapContractType[v.Type]; ok {
 			mapContract[v.Contract] = &contracts[i]
@@ -61,12 +60,12 @@ func InitAllNode(url []string) {
 	nodeall = append(nodeall, url...)
 }
 
-func newGrpcClient(url string) *service.GrpcClient {
-	return service.NewGrpcClient(url)
+func newGrpcClient(url string) *services.GrpcClient {
+	return services.NewGrpcClient(url)
 }
 
 // 后期改为 长链接
-func getMaineNode() *service.GrpcClient {
+func getMaineNode() *services.GrpcClient {
 	node := newGrpcClient(nodemain)
 	err := node.Start()
 	if err != nil {
@@ -109,7 +108,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func getRandOneNode() *service.GrpcClient {
+func getRandOneNode() *services.GrpcClient {
 	lens := len(nodeall)
 	for i := 0; i < lens; i++ {
 		nodeurl := nodeall[rand.Intn(lens)]

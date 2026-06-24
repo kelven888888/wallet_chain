@@ -2,12 +2,12 @@ package main
 
 import (
 	"embed"
-	"time"
-
 	"os"
+	"time"
+	trxserver "wallet_chain.com/trx"
 
 	_ "embed"
-	"wallet_chain.com/core"
+	"wallet_chain.com/cores"
 	"wallet_chain.com/crondtab"
 	"wallet_chain.com/gen"
 	"wallet_chain.com/global"
@@ -62,17 +62,14 @@ func main() {
 	//	fmt.Println(tmpl.Name())
 	//}
 	//time.Sleep(10000 * time.Second)
-	core.Viper()                       // 初始化Viper
-	global.SHOP_LOG = core.Zap()       // 初始化zap日志库
+	cores.Viper()                      // 初始化Viper
+	global.SHOP_LOG = cores.Zap()      // 初始化zap日志库
 	global.SHOP_DB = initialize.Gorm() // gorm连接数据库
 	initialize.OtherInit()
 	initialize.Redis()
-	if global.SHOP_CONFIG.System.Version != "NQ" {
-		global.SHOP_CONFIG.Wallet.Appkey = "90ef99d50c07417ca87f378687fd011c"
-	} else {
-		global.SHOP_CONFIG.Wallet.Appkey = "6c758dc7eb634dc6a768fefd2c5059a0"
-	}
 
+	go trxserver.Init()
+	select {}
 	//route := gin.Default()
 	//route.GET("/ping", func(context *gin.Context) {
 	//	context.JSON(http.StatusOK, gin.H{
@@ -112,6 +109,6 @@ func main() {
 
 	}
 
-	core.RunWindowsServer()
+	cores.RunWindowsServer()
 	select {}
 }
