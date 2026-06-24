@@ -313,16 +313,16 @@ func processTransaction(node *service.GrpcClient, contract, txid, from, to strin
 		if err != nil {
 			log.Error(err)
 		}
-		if act != nil { // 收币地址
+		if act.Id != 0 { // 收币地址
 			pub = act.PublicKey
-			if acf != nil {
+			if acf.Id != 0 {
 				types = CollectOwn // 站内转账 暂时不可能触发
 			} else {
 				types = Receive
 				go collectall(to) // 归集检测
 			}
 		} else {
-			if acf != nil {
+			if acf.Id != 0 {
 				types = CollectSend // 转账到外面地址 异常
 			} else {
 				return // 不处理 都不是平台的地址

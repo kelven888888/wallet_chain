@@ -13,7 +13,7 @@ import (
 //	  gorm.Model
 //	}
 type Model struct {
-	Id        int        `json:"id" gorm:"primary_key" form:"id"`
+	Id        int64      `json:"id" gorm:"primary_key" form:"id"`
 	CreatedAt *LocalTime `json:"created_at"`
 	UpdatedAt *LocalTime `json:"updated_at"`
 	DeletedAt *LocalTime `json:"deleted_at" sql:"index"`

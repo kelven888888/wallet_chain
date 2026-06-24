@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
     	"fmt"
-    	"wallet_chain.com/admin/model"
-    	"wallet_chain.com/admin/model/common/request"
-    	"wallet_chain.com/global"
+    	"ginshop.com/admin/model"
+    	"ginshop.com/admin/model/common/request"
+    	"ginshop.com/global"
     	"time"
 )
 
@@ -20,7 +20,17 @@ func (this *SBanner) GetAll(pageInfo request.PageInfo) ([]model.Banner, int64) {
     	if pageInfo.Keyword != "" {
 
         		query.Where(fmt.Sprintf("%s like '%s'", pageInfo.SearchField, "%%"+pageInfo.Keyword+"%%"))
-        	}
+       }
+       if pageInfo.Username != "" {
+
+       		query.Where("username=?", pageInfo.Username)
+       	}
+       	if pageInfo.Status != nil {
+       		if *pageInfo.Status != 0 {
+
+       			query.Where("status =? ", *pageInfo.Status-1)
+       		}
+       	}
 
     	var count int64 = 0
     	query.Count(&count)
@@ -43,9 +53,13 @@ func (this *SBanner) GetByID(id request.GetById) (*model.Banner, error) {
 }
 func (this *SBanner) Save(models *model.Banner) error {
 	if models.Id > 0 {
+		now := model.LocalTime(time.Now())
+		models.Model.UpdatedAt = &now
 		return global.SHOP_DB.Updates(&models).Error
 	} else {
-	    models.CreateTime=time.Now()
+		now := model.LocalTime(time.Now())
+		models.Model.CreatedAt = &now
+
 		return global.SHOP_DB.Save(&models).Error
 	}
 

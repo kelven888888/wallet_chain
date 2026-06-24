@@ -8,7 +8,7 @@
          <form class="layui-form x-center x-search-form" style="width:80%">
                         <div class="layui-form-pane" style="margin-top: 15px;">
                             <div class="layui-form-item">
-
+                                  {{.Searchfile}}
                                 <div class="layui-inline">
                                     <label class="layui-form-label">关键字</label>
                                     <div class="layui-input-inline">
@@ -51,7 +51,8 @@
                     <tr>
 
                        {{.Header}}
-                       <td>操作</td>
+                        <th>创建时间</th>
+                       <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="x-img">

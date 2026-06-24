@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"wallet_chain.com/admin/model"
 	"wallet_chain.com/log"
 	"wallet_chain.com/services"
 
@@ -329,6 +330,9 @@ func creataddress() (*Account, error) {
 		Ctime:      time.Now().Unix(),
 		Amount:     0,
 	}
+	now := model.LocalTime(time.Now())
+	accountT.Model.CreatedAt = &now
+
 	_, err = dbengine.InsertAccount(accountT)
 	return accountT, err
 }

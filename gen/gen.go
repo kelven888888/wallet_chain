@@ -36,9 +36,22 @@ type Gen struct {
 // go run .\main.go gen NewsMorningPaper 早晚报总结 118
 // go run main.go gen WalletChain 充提币渠道 6
 // go run main.go gen Goods 产品 54
-// go run main.go gen w 玩法配置 54
+// go run main.go gen Playsetting 玩法配置 54
+// go run main.go gen UserStore 仓库 54
+// go run main.go gen GameLottyRecord 抽奖记录 54
+// go run main.go gen LevelUpdateLog 升级记录 54
+// go run main.go gen ExpRecord 经验记录 54
+// go run main.go gen Orders 订单 54
+// go run main.go gen OrderItems 订单详情 54
+// go run main.go gen PointRedeemRecord 积分兑换记录 54
+// go run main.go gen TbCoupon 优惠券 118
+// go run main.go gen TbCouponList 优惠券列表 118
+// go run main.go gen OrdersShipping 发货订单 54
+// go run main.go gen OrderItemsShipping 发货订单详情 54
+// go run main.go gen WebNotic 公告 6
+// go run main.go gen ShippingAddresses 收货地址 54
 func (this *Gen) Gener(types string, text string, pid string) {
-	var models model.MPlayConfig
+	var models model.Model
 	var modelrole, roles, roleinsert model.Role
 	global.SHOP_DB.Where("module=?", types).First(&modelrole)
 	addroute := true
@@ -120,19 +133,24 @@ func (this *Gen) Gener(types string, text string, pid string) {
 	if t.Kind() == reflect.Struct {
 		fmt.Println("Type is a struct")
 		// 遍历结构体的字段
-		header := "<th style=\"width: 30px\"><input type=\"checkbox\" lay-skin=\"primary\" lay-filter=\"all-select\"></th>\n                      "
-		content := " {{range .List}}\n                    <tr>\n                        <td><input type=\"checkbox\" lay-skin=\"primary\" value=\"{{.Id}}\" class=\"all-x-select\"></td>\n                        "
+		header := "<th style=\"width: 30px\"><input type=\"checkbox\" lay-skin=\"primary\" lay-filter=\"all-select\"></th>\n                 " +
+			"<th>ID</th> \r\n "
+		content := " {{range .List}}\n                    <tr>\n                        <td><input type=\"checkbox\" lay-skin=\"primary\" value=\"{{.Id}}\" class=\"all-x-select\"></td>\n          " +
+			"<td>{{ .Id}}</td>         \r\n    "
 		item := ""
 		structs := "package model\n\nimport \"time\" \r\ntype " + types + " struct {\r\n"
 		search_type_field := ""
+		search := ""
 		for i := 0; i < t.NumField(); i++ {
+
 			field := t.Field(i) // 获取字段的详细信息
-			//	fmt.Printf("Field %d: Name=%s Type=%s\n", i, field.Name, field.Type)
+			fmt.Printf("Field %d: Name=%s Type=%s\n", i, field.Name, field.Type)
 			tag1 := field.Tag.Get("comment")
 			typess := field.Tag.Get("types")
 			ranges := field.Tag.Get("range")
 			text := field.Tag.Get("text")
 			edit := field.Tag.Get("edit")
+			//search := field.Tag.Get("search")
 			time_format := field.Tag.Get("time_format")
 			if time_format != "" {
 				structs = structs + field.Name + " " + fmt.Sprintf("%s", field.Type) + " `comment:\"" + tag1 + "\" types:\"" + typess + "\" text:\"" + text + "\" json:\"" + utils.TransformSecondUppercase(field.Name) + "\" form:\"" + utils.TransformSecondUppercase(field.Name) + "\" range:\"" + ranges + "\" edit:\"" + edit + "\" time_format:\"" + time_format + "\" `\r\n"
@@ -164,6 +182,15 @@ func (this *Gen) Gener(types string, text string, pid string) {
 					content = content + "{{if eqpoint ." + field.Name + " " + v + "}}" + textarr[k] + "{{end}}"
 				}
 				content = content + "</td>\r\n"
+				search = search + " <div class=\"layui-inline\"> <label class=\"layui-form-label\">" + tag1 + "</label>\n                            <div class=\"layui-input-inline\">\n                                <select name='" + utils.TransformSecondUppercase(field.Name) + "'  lay-verify=\"required\" lay-search=\"\">\n                                    <option value=\"\">直接选择或搜索选择</option>"
+				for k, v := range rangesarr {
+					vs, _ := strconv.Atoi(v)
+					values := vs + 1
+
+					//search = search + "{{if eqpoint ." + field.Name + " " + v + "}}" + textarr[k] + "{{end}}"
+					search = search + "<option  value=" + fmt.Sprintf("%d", values) + " {{if eqpoint .Search." + utils.TransformSecondUppercase(field.Name) + " " + fmt.Sprintf("%d", values) + "}}selected{{end}}>" + textarr[k] + "</option>\r\n"
+				}
+				search = search + "\n                                </select>\n                            </div>\n                        </div>\r\n"
 				//}
 			} else {
 				content = content + "<td>{{." + field.Name + "}}</td>\r\n"
@@ -212,8 +239,9 @@ func (this *Gen) Gener(types string, text string, pid string) {
 		scrip := "\t<script>\n\t\twindow.onload = function() {\n\t\t\tlayui.use(['layer', 'form' ,'laypage', 'form'], function() {\n\t\t\t\t$ = layui.jquery; //jquery\n\t\t\t\tlayer = layui.layer; //弹出层\n                var laypage = layui.laypage; // 分页\n                form=layui.form\n                // 分页\n                laypage.render({\n                    elem: 'page',\n                    count: {{.Count}},\n                limit: {{.Search.limit}},\n                curr:  {{.Search.page}},\n                prev: '<em><</em>',\n                    next: '<em>></em>',\n                    skip: false,\n                    jump: function (obj, first) {\n                    if (first != true) {\n                        var query = $('.x-search-form').serialize();\n                        query += \"&page=\" + obj.curr;\n\n                        //  load_page({{urlfor \"admin.RoleController.Index\"}} + \"?\" + query,\"son\");\n                        window.location.href={{urlfor \"admin.BannerController.Index\"}} + \"?\" + query\n                        //layui.admin.tabsBody(layui.admin.tabsPage.index).find(\".layadmin-iframe\")\n                        // layui.admin.url .tabsBodyChange({{urlfor \"admin.RoleController.Index\"}} + \"?\" + query)\n                    }\n                }\n            });\n\n\t\t\t\tlayer.ready(function() { //为了layer.ext.js加载完毕再执行\n\t\t\t\t\tlayer.photos({\n\t\t\t\t\t\tphotos: '#x-img'\n\t\t\t\t\t\t//,shift: 5 //0-6的选择，指定弹出图片动画类型，默认随机\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t});\n            $('#resetBtn').on('click', function(){\n                // 使用form模块的resetField方法来重置表单\n                form.resetField('myForm');\n            });\n\t\t}\n\n\t\t// 批量删除提交\n\t\tfunction del_all() {\n\t\t\tparent.layer.confirm('确认要删除吗？', function(index) {\n                var ids = get_list_ids('all-x-select');\n\t\t\t\t// 发异步删除数据\n\t\t\t\tajax_post({{urlfor \"admin.BannerController.DeleteBatch\"}}, {ids: ids}, false,true, false, true);\n\t\t\t});\n\t\t}\n\n\t\t// 删除\n\t\tfunction del(obj, id, name) {\n            parent.layer.confirm('确认要删除吗？', function(index) {\n\t\t\t\t$(obj).parents(\"tr\").remove();\n\n\t\t\t\t//发异步删除数据\n\t\t\t\tajax_post({{urlfor \"admin.BannerController.Delete\"}}, {id: id, name: name}, reload_page);\n\t\t\t});\n\t\t}\n        $(\"#btn-search\").click(function () {\n            var query = $('.x-search-form').serialize();\n            console.log(query)\n            load_page({{urlfor \"admin.BannerController.Index\"}} + '?' + query);\n        });\n        $(\"#reset\").click(function () {\n            load_page({{urlfor \"admin.BannerController.Index\"}} + '?' );\n        });\n\n    </script>"
 		scrip = strings.Replace(scrip, "Banner", types, -1)
 		//headercontent := " <xblock>\n                <button class=\"layui-btn layui-btn-danger\" onclick=\"del_all()\"><i class=\"layui-icon\">&#xe640;</i>批量删除</button>\n                <button class=\"layui-btn\" onclick=\"x_admin_show('添加banner', '{{urlfor \"admin.BannerController.Add\"}}')\"><i class=\"layui-icon\">&#xe608;</i>添加</button>\n                <span class=\"x-right\" style=\"line-height:40px\">共有数据：{{.Count}} 条</span>\n            </xblock>\n            <table class=\"layui-table layui-form\">\n                <thead>\n                    <tr>\n                        <th style=\"width: 30px\"><input type=\"checkbox\" lay-skin=\"primary\" lay-filter=\"all-select\"></th>\n                        <th>ID</th>\n                        <th>缩略图</th>\n                        <th>标题</th>\n                        <th>跳转url</th>\n<!--                        <th>广告位</th>-->\n<!--                        <th>链接</th>-->\n<!--                        <th>描述</th>-->\n                        <th>语言</th>\n                        <th>状态</th>\n                        <th>添加时间</th>\n                        <th>操作</th>\n                    </tr>\n                </thead>" // 定义数据
-		actionbtn := " <td class=\"td-manage\">\n                            <a href=\"javascript:;\" onclick=\"x_admin_show('编辑群组', {{urlfor \"admin.BannerController.Edit\" \"id\" .Id}})\" class=\"layui-btn layui-btn-xs layui-btn-normal\">\n                            <i class=\"layui-icon\">&#xe642;</i>编辑\n                            </a>\n                            <a class=\"layui-btn layui-btn-xs layui-btn-danger\" href=\"javascript:;\" onclick=\"del(this,'{{.Id}}')\">\n                                <i class=\"layui-icon\">&#xe640;</i>删除\n                            </a>\n                        </td> </tr>\n                {{end}}"
+		actionbtn := " <td class=\"td-manage\">\n                            <a href=\"javascript:;\" onclick=\"x_admin_show('编辑', {{urlfor \"admin.BannerController.Edit\" \"id\" .Id}})\" class=\"layui-btn layui-btn-xs layui-btn-normal\">\n                            <i class=\"layui-icon\">&#xe642;</i>编辑\n                            </a>\n                            <a class=\"layui-btn layui-btn-xs layui-btn-danger\" href=\"javascript:;\" onclick=\"del(this,'{{.Id}}')\">\n                                <i class=\"layui-icon\">&#xe640;</i>删除\n                            </a>\n                        </td> </tr>\n                {{end}}"
 		actionbtn = strings.Replace(actionbtn, "Banner", types, -1)
+		content = content + "  <td> {{.CreatedAt}}</td>"
 		content = content + actionbtn
 		main := "{{define \"main\"}}\r\n"
 		end := "{{end}}\r\n"
@@ -228,6 +256,7 @@ func (this *Gen) Gener(types string, text string, pid string) {
 			Ends            template.HTML
 			Searchtypefield template.HTML
 			Keyword         template.HTML
+			Searchfile      template.HTML
 		}{
 			Main:            template.HTML(main),
 			Header:          template.HTML(header),
@@ -237,6 +266,7 @@ func (this *Gen) Gener(types string, text string, pid string) {
 			Ends:            template.HTML(end),
 			Searchtypefield: template.HTML(search_type_field),
 			Keyword:         template.HTML(keyword),
+			Searchfile:      template.HTML(search),
 		}
 		os.Mkdir("views/admin/include/"+strings.ToLower(types)+"/", 0755)
 		output := "views/admin/include/" + strings.ToLower(types) + "/" + strings.ToLower(types) + "_index.html"

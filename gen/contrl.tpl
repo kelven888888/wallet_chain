@@ -2,10 +2,10 @@ package controller
 
 import (
 	"fmt"
-	"wallet_chain.com/admin/model"
-	"wallet_chain.com/admin/model/common/request"
-	"wallet_chain.com/admin/service"
-	"wallet_chain.com/global"
+	"ginshop.com/admin/model"
+	"ginshop.com/admin/model/common/request"
+	"ginshop.com/admin/service"
+	"ginshop.com/global"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -43,6 +43,7 @@ func (this *CBanner) Index(ctx *gin.Context) {
     		"limit":        size,
     		"kw":           req.Keyword,
     		"search_field": req.SearchField,
+    		"status":       req.Status,
     	}
 
 	ctx.HTML(http.StatusOK, "banner_index.html", gin.H{

@@ -1,6 +1,7 @@
 package trx
 
 import (
+	"fmt"
 	"sync"
 	"time"
 	"wallet_chain.com/log"
@@ -27,6 +28,7 @@ func RunTransaction() {
 	remaning := countnum % goroutineNumScan // 最后一次的次数
 
 	blockHeight := targetHeight
+	fmt.Println(tmpendheight, targetHeight)
 
 	var wg = &sync.WaitGroup{}
 	var i int64 = 0
@@ -46,7 +48,7 @@ func RunTransaction() {
 		} else {
 			targetHeight = blockHeight
 		}
-		err := dbengine.InsertLastBlockHeight(targetHeight)
+		err := dbengine.InsertLastBlockHeight(targetHeight, tmpendheight, "trx")
 		log.Infof("insert height %d err %v", targetHeight, err)
 		select {
 		case <-ctx.Done():
@@ -65,7 +67,7 @@ func RunTransaction() {
 		}
 		wg.Wait()
 		targetHeight = tmpendheight
-		err := dbengine.InsertLastBlockHeight(targetHeight)
+		err := dbengine.InsertLastBlockHeight(targetHeight, tmpendheight, "trx")
 		log.Infof("insert height %d err %v", targetHeight, err)
 	}
 }
@@ -221,7 +223,7 @@ func RunCollect() {
 			var lens = len(addr)
 			log.Infof("collect Contract %s nums %d", v.Contract, lens)
 			for i := 0; i < lens; i++ {
-				startid = addr[i].ID
+				startid = addr[i].Id
 				wgcollect.Add(1)
 				task <- true
 				go func(k int) {
@@ -264,7 +266,7 @@ func RunCollect() {
 		}
 
 		for i := 0; i < lens; i++ {
-			id = addr[i].ID
+			id = addr[i].Id
 			if addr[i].Address == mainAddr {
 				continue
 			}

@@ -1,7 +1,7 @@
 package router
 
 import (
-	"wallet_chain.com/admin/controller"
+	"ginshop.com/admin/controller"
 	"github.com/gin-gonic/gin"
 )
 

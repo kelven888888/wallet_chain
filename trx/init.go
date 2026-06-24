@@ -145,6 +145,7 @@ func Init() {
 	InitMainAndFee()
 	InitWalletInfo()
 	InitSeed()
+	//fmt.Println(fmt.Sprintf("%+v", walletInfo))
 	Task()
 }
 
@@ -178,6 +179,7 @@ func Task() {
 			}
 		}
 	}()
+
 	go func() {
 		log.Info("getWalletInfo Ticker")
 		for {
