@@ -4,10 +4,11 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"github.com/smirkcat/hdwallet"
+	"wallet_chain.com/admin/model"
 )
 
-func SearchAccount(addr string) (*Account, error) {
-	var ac *Account
+func SearchAccount(addr string) (*model.Account, error) {
+	var ac *model.Account
 	var err error
 
 	ac, err = dbengine.GetAccountWithAddr(addr)

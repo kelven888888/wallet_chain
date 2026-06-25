@@ -22,60 +22,6 @@ const (
 	CollectSend  = "collect_send"  // 本平台地址提币到站外 异常的
 )
 
-// OtherParam .
-type OtherParam struct {
-	Key   string `gorm:"'key' unique"`
-	Value string `gorm:"'value'"`
-}
-
-// TableName 表名
-func (fh OtherParam) TableName() string {
-	return "param"
-}
-
-// Account 账户分配的地址
-type Account struct {
-	model.Model
-	Address    string `gorm:"'address' unique DEFAULT '' "`         // 唯一索引
-	PublicKey  string `gorm:"'public_key'"  json:"publickey"`       // 公钥新版字段 如果有就是新版
-	PrivateKey string `gorm:"'private_key'" sql:"comment:'地址私钥'"`   // 地址私钥
-	Index      int    `gorm:"'index' DEFAULT 0" sql:"comment:'位置'"` // 唯一
-	User       string `gorm:"'user'"`
-	Ctime      int64  `gorm:"'ctime'"`                          // 创建时间
-	Amount     int64  `gorm:"'amount' index INTEGER DEFAULT 0"` // 主链币种余额
-}
-
-func (fh Account) TableName() string {
-	return "account"
-}
-
-// Balance  代币余额
-type Balance struct {
-	model.Model
-	Address  string `gorm:"'address' DEFAULT '' "`
-	Contract string `gorm:"'contract' index"` // 哪种合约
-	Amount   int64  `gorm:"'amount' index INTEGER DEFAULT 0"`
-}
-
-func (fh Balance) TableName() string {
-	return "balance"
-}
-
-// Transactions .
-type Transactions struct {
-	ID          int64  `gorm:"'id' pk autoincr" json:"-"`
-	TxID        string `gorm:"'tx_id'" json:"txid"`
-	BlockHeight int64  `gorm:"'block_height'" json:"blockheight"`
-	PublicKey   string `gorm:"'public_key'"  json:"publickey"` // 公钥新版字段 如果有就是新版
-	Address     string `gorm:"'address' index" json:""`
-	FromAddress string `gorm:"'from_address'" json:"fromaddress"`
-	Contract    string `gorm:"'contract' index"` // 哪种合约
-	Amount      string `gorm:"'amount'" json:"amount"`
-	Fee         string `gorm:"'fee'" json:"fee"` // 保留字段
-	Timestamp   int64  `gorm:"'timestamp'"`
-	Type        string `gorm:"'type'"` // send recive collect
-}
-
 // DB .
 type DB struct {
 }
@@ -120,9 +66,9 @@ func (db *DB) Sync() error {
 }
 
 // InsertAccount 插入数据
-func (db *DB) InsertAccount(account *Account) (int64, error) {
+func (db *DB) InsertAccount(account *model.Account) (int64, error) {
 	//return db.("address", "private_key", "public_key", "index", "user", "ctime", "amount").Insert(account)
-	err := global.SHOP_DB.Model(Account{}).Create(account).Error
+	err := global.SHOP_DB.Model(model.Account{}).Create(account).Error
 	if err != nil {
 		global.SHOP_LOG.Error(err.Error())
 		return 0, err
@@ -131,8 +77,8 @@ func (db *DB) InsertAccount(account *Account) (int64, error) {
 }
 
 // UpdateAccount 更新数据
-func (db *DB) UpdateAccount(account *Account) (int64, error) {
-	err := global.SHOP_DB.Model(Account{}).Where("address = ? ", account.Address).Save(account).Error
+func (db *DB) UpdateAccount(account *model.Account) (int64, error) {
+	err := global.SHOP_DB.Model(model.Account{}).Where("address = ? ", account.Address).Save(account).Error
 	if err != nil {
 		global.SHOP_LOG.Error(err.Error())
 		return 0, err
@@ -142,8 +88,8 @@ func (db *DB) UpdateAccount(account *Account) (int64, error) {
 }
 
 // GetAccountWithAddr 搜索地址是否存在
-func (db *DB) GetAccountWithAddr(addr string) (*Account, error) {
-	var tmp Account
+func (db *DB) GetAccountWithAddr(addr string) (*model.Account, error) {
+	var tmp model.Account
 	global.SHOP_DB.Where("address = ?", addr).Limit(1).Find(&tmp)
 
 	return &tmp, nil
@@ -156,8 +102,8 @@ func (db *DB) GetAccountMaxIndex() int {
 }
 
 // GetAccount 获取所有账户
-func (db *DB) GetAccount(from int) ([]Account, error) {
-	var tmp = make([]Account, 0)
+func (db *DB) GetAccount(from int) ([]model.Account, error) {
+	var tmp = make([]model.Account, 0)
 	if from < 0 {
 		from = 0
 	}
@@ -166,15 +112,15 @@ func (db *DB) GetAccount(from int) ([]Account, error) {
 }
 
 // GetAccountWithBalance 获取大于minAmount的所有账户
-func (db *DB) GetAccountWithBalance(startid int64, count int) ([]Account, error) {
-	var tmp = make([]Account, 0)
+func (db *DB) GetAccountWithBalance(startid int64, count int) ([]model.Account, error) {
+	var tmp = make([]model.Account, 0)
 	err := global.SHOP_DB.Where("id> ?", startid).Limit(count).Find(&tmp).Error
 	return tmp, err
 }
 
 // SearchBalance 搜索余额记录是否存在
-func (db *DB) SearchBalance(contract, address string) (*Balance, error) {
-	var tmp Balance
+func (db *DB) SearchBalance(contract, address string) (*model.Balance, error) {
+	var tmp model.Balance
 	err := global.SHOP_DB.Where("contract = ? and address =?", contract, address).Find(&tmp).Error
 	if err != nil {
 		return nil, err
@@ -183,16 +129,16 @@ func (db *DB) SearchBalance(contract, address string) (*Balance, error) {
 }
 
 // InsertBalance 插入数据
-func (db *DB) InsertBalance(account *Balance) (int64, error) {
+func (db *DB) InsertBalance(account *model.Balance) (int64, error) {
 	re, _ := db.SearchBalance(account.Contract, account.Address)
 	if re != nil {
-		err := global.SHOP_DB.Model(Balance{}).Where("id=?", re.Id).Find(&account).Updates(map[string]interface{}{"amount": account.Amount}).Error
+		err := global.SHOP_DB.Model(model.Balance{}).Where("id=?", re.Id).Find(&account).Updates(map[string]interface{}{"amount": account.Amount}).Error
 		if err != nil {
 			global.SHOP_LOG.Error(err.Error())
 			return 0, err
 		}
 	}
-	err := global.SHOP_DB.Model(Balance{}).Create(&account).Error
+	err := global.SHOP_DB.Model(model.Balance{}).Create(&account).Error
 	if err != nil {
 		global.SHOP_LOG.Error(err.Error())
 		return 0, err
@@ -201,8 +147,8 @@ func (db *DB) InsertBalance(account *Balance) (int64, error) {
 }
 
 // GetAccountWithContractBalance 获取大于minAmount的所有账户合约余额
-func (db *DB) GetAccountWithContractBalance(contract string, minAmount, startid int64, count int) ([]Balance, error) {
-	var tmp = make([]Balance, 0)
+func (db *DB) GetAccountWithContractBalance(contract string, minAmount, startid int64, count int) ([]model.Balance, error) {
+	var tmp = make([]model.Balance, 0)
 	err := global.SHOP_DB.Where("contract= ? and amount >= ? and id > ?", contract, minAmount, startid).Order("id").Limit(count).Find(&tmp).Error
 	return tmp, err
 }
@@ -215,8 +161,8 @@ func (db *DB) GetSumContractBalance(contract string) (map[string]int64, error) {
 }
 
 // GetTransactions 获取最近交易记录
-func (db *DB) GetTransactions(contract, addr string, count, skip int) ([]Transactions, error) {
-	var tmp = make([]Transactions, 0)
+func (db *DB) GetTransactions(contract, addr string, count, skip int) ([]model.Transactions, error) {
+	var tmp = make([]model.Transactions, 0)
 
 	if count < 1 || count > 1000 {
 		count = 300
@@ -234,8 +180,8 @@ func (db *DB) GetTransactions(contract, addr string, count, skip int) ([]Transac
 }
 
 // GetCollestTransactions 获取指定时间段内归集交易记录
-func (db *DB) GetCollestTransactions(sTime, eTime int64, contract string) ([]Transactions, error) {
-	var tmp = make([]Transactions, 0)
+func (db *DB) GetCollestTransactions(sTime, eTime int64, contract string) ([]model.Transactions, error) {
+	var tmp = make([]model.Transactions, 0)
 	if eTime < sTime || eTime < 1 {
 		eTime = 0
 	}
@@ -248,8 +194,8 @@ func (db *DB) GetCollestTransactions(sTime, eTime int64, contract string) ([]Tra
 }
 
 // SearchTransactions 搜索交易记录是否存在
-func (db *DB) SearchTransactions(txid string) (*Transactions, error) {
-	var tmp Transactions
+func (db *DB) SearchTransactions(txid string) (*model.Transactions, error) {
+	var tmp model.Transactions
 	err := global.SHOP_DB.Where("tx_id = ?", txid).Limit(1).Find(&tmp).Error
 	if err != nil {
 		global.SHOP_LOG.Error(err.Error())
@@ -260,24 +206,24 @@ func (db *DB) SearchTransactions(txid string) (*Transactions, error) {
 }
 
 // InsertTransactions 插入数据
-func (db *DB) InsertTransactions(transactions *Transactions) (int64, error) {
+func (db *DB) InsertTransactions(transactions *model.Transactions) (int64, error) {
 	re, _ := db.SearchTransactions(transactions.TxID)
 	if re != nil {
 		return 0, nil
 	}
-	err := global.SHOP_DB.Model(Transactions{}).Create(&transactions).Error
+	err := global.SHOP_DB.Model(model.Transactions{}).Create(&transactions).Error
 	if err != nil {
 		global.SHOP_LOG.Error(err.Error())
 		return 0, err
 	}
-	return transactions.ID, nil
+	return transactions.Id, nil
 	//return db.Cols("tx_id", "block_height", "address", "public_key", "from_address", "contract",
 	//	"amount", "fee", "timestamp", "type").Insert(transactions)
 }
 
 // LoadLastBlockHeight 获取最后一次扫描高度 已经扫描到这个高度
 func (db *DB) LoadLastBlockHeight() (int64, error) {
-	var tmp OtherParam
+	var tmp model.OtherParam
 	err := global.SHOP_DB.Where("`key`='trx_block'").Limit(1).Find(&tmp).Error
 	if err != nil || tmp.Value == "0" {
 		return 0, errors.New("没用记录")
@@ -290,7 +236,7 @@ func (db *DB) LoadLastBlockHeight() (int64, error) {
 // InsertLastBlockHeight 更新最后一次扫描高度
 func (db *DB) InsertLastBlockHeight(num int64, numtop int64, keys string) (err error) {
 	global.SHOP_LOG.Info("InsertLastBlockHeight")
-	var tmp = OtherParam{}
+	var tmp = model.OtherParam{}
 	tmpkey := fmt.Sprintf("%s_block", keys)
 	global.SHOP_DB.Where("`key`=?", tmpkey).Find(&tmp)
 	if tmp.Key == "" {
@@ -304,9 +250,9 @@ func (db *DB) InsertLastBlockHeight(num int64, numtop int64, keys string) (err e
 	} else {
 		tmp.Value = strconv.FormatInt(num, 10)
 		tmp.Key = tmpkey
-		err = global.SHOP_DB.Model(OtherParam{}).Where("`key`=?", tmpkey).Updates(&tmp).Error
+		err = global.SHOP_DB.Model(model.OtherParam{}).Where("`key`=?", tmpkey).Updates(&tmp).Error
 	}
-	var tmps = OtherParam{}
+	var tmps = model.OtherParam{}
 	tmpskey := fmt.Sprintf("%s_block_top", keys)
 	global.SHOP_DB.Where("`key`=?", tmpskey).Find(&tmps)
 	if tmps.Key == "" {
@@ -320,7 +266,7 @@ func (db *DB) InsertLastBlockHeight(num int64, numtop int64, keys string) (err e
 	} else {
 		tmps.Value = strconv.FormatInt(numtop, 10)
 		tmps.Key = tmpskey
-		err = global.SHOP_DB.Model(OtherParam{}).Where("`key`=?", tmpskey).Updates(&tmps).Error
+		err = global.SHOP_DB.Model(model.OtherParam{}).Where("`key`=?", tmpskey).Updates(&tmps).Error
 	}
 	return
 }

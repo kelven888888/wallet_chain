@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"wallet_chain.com/admin/model"
 	"wallet_chain.com/log"
 
 	"github.com/shopspring/decimal"
@@ -103,7 +104,7 @@ func collectall(addr string) {
 		// 更新余额
 		var amountdecimal = decimal.New(1, v.Decimal)
 		amountac, _ := amount.Mul(amountdecimal).Float64()
-		var tmp = &Balance{
+		var tmp = &model.Balance{
 			Address:  addr,
 			Contract: v.Contract,
 			Amount:   int64(amountac),
@@ -148,7 +149,7 @@ func collectall(addr string) {
 			// 更新余额
 			var amountdecimal = decimal.New(1, mapContract[contract].Decimal)
 			amountac, _ := amount.Mul(amountdecimal).Float64()
-			var tmp = &Balance{
+			var tmp = &model.Balance{
 				Address:  addr,
 				Contract: contract,
 				Amount:   int64(amountac),
@@ -185,7 +186,7 @@ func collectall(addr string) {
 	}
 	// 更新余额
 	amountac, _ := amounttrx.Mul(decimal.New(1, 6)).Float64()
-	var tmp = &Balance{
+	var tmp = &model.Balance{
 		Address:  addr,
 		Contract: "",
 		Amount:   int64(amountac),

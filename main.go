@@ -2,16 +2,16 @@ package main
 
 import (
 	"embed"
+	_ "embed"
 	"os"
 	"time"
-	trxserver "wallet_chain.com/trx"
-
-	_ "embed"
+	ethcrontab "wallet_chain.com/cmd/crontab"
 	"wallet_chain.com/cores"
 	"wallet_chain.com/crondtab"
 	"wallet_chain.com/gen"
 	"wallet_chain.com/global"
 	"wallet_chain.com/initialize"
+	trxserver "wallet_chain.com/trx"
 )
 
 func timeDifferenceInMinutes(t1, t2 time.Time) int {
@@ -41,27 +41,6 @@ func main() {
 		extension    = "/*.html"
 	)
 
-	//fss, err := Templatess.ReadDir("views/admin/include")
-	//{
-	//
-	//}
-	//s, _ := fs.ReadDir(Templatess, "include")
-	//fmt.Println(s)
-	//
-	//tmplFiles, err := fs.ReadDir(Templatess, "views/admin/include")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//
-	//for _, tmpl := range tmplFiles {
-	//	if tmpl.IsDir() {
-	//		soutpm, _ := fs.ReadDir(Templatess, fmt.Sprintf("views/admin/include/%s", tmpl.Name()))
-	//		fmt.Println(fmt.Sprintf("views/admin/include/%s", tmpl))
-	//		fmt.Println(soutpm)
-	//	}
-	//	fmt.Println(tmpl.Name())
-	//}
-	//time.Sleep(10000 * time.Second)
 	cores.Viper()                      // 初始化Viper
 	global.SHOP_LOG = cores.Zap()      // 初始化zap日志库
 	global.SHOP_DB = initialize.Gorm() // gorm连接数据库
@@ -69,15 +48,10 @@ func main() {
 	initialize.Redis()
 
 	go trxserver.Init()
+	go ethcrontab.Init()
+
 	select {}
-	//route := gin.Default()
-	//route.GET("/ping", func(context *gin.Context) {
-	//	context.JSON(http.StatusOK, gin.H{
-	//		"code": 200,
-	//		"data": "",
-	//	})
-	//
-	//})
+
 	//ctx := context.Background()
 	////go service.RunPublisher(ctx, "shop_message")
 	//go service.RunSubscriber(ctx, "shop_message", "shop_message_queue")

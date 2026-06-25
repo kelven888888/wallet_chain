@@ -10,14 +10,14 @@ import (
 
 func InitPublicRouter(Router *gin.RouterGroup) (R gin.IRoutes) {
 	controllers := controller.Publiccontroll{}
-	wallcontrollers := controller.WalletCtr{}
+	//wallcontrollers := controller.WalletCtr{}
 	Router.GET("/", func(context *gin.Context) {
 		context.Abort()
 		context.Redirect(302, "/public/login")
 
 	})
 
-	Router.Any("/wallet/payoutcalback", wallcontrollers.PayoutBack)
+	//Router.Any("/wallet/payoutcalback", wallcontrollers.PayoutBack)
 
 	BaserRouter := Router.Group("public")
 	{

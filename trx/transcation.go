@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 	"time"
+	"wallet_chain.com/admin/model"
 	"wallet_chain.com/api"
 	"wallet_chain.com/core"
 	service "wallet_chain.com/services"
@@ -340,7 +341,7 @@ func processTransaction(node *service.GrpcClient, contract, txid, from, to strin
 	}
 
 	_, decimalnum := chargeContract(contract)
-	var trans = &Transactions{
+	var trans = &model.Transactions{
 		TxID:        txid,
 		Contract:    contract,
 		Type:        types,

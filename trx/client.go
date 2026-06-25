@@ -309,7 +309,7 @@ func loadAccount(addr string) (*ecdsa.PrivateKey, error) {
 	return hdwallet.GetPrivateKeyByHexString(re.PrivateKey)
 }
 
-func creataddress() (*Account, error) {
+func creataddress() (*model.Account, error) {
 	var uuidv4 = hdwallet.GenPwd()
 	pwd := hdwallet.HashAndSalt([]byte(uuidv4))
 	index, privateKey, err := NewPrivateKey()
@@ -321,7 +321,7 @@ func creataddress() (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	accountT := &Account{
+	accountT := &model.Account{
 		Address:    adderss,
 		Index:      index,
 		PrivateKey: priEncrypt,

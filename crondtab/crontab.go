@@ -16,7 +16,7 @@ func Initcrond() {
 	}
 	s.ChangeLocation(location)
 
-	s.Every(30).Second().Do(iptoaddr)
+	//s.Every(30).Second().Do(iptoaddr)
 
 	//s.Every(1).Day().At("16:00").Do(Initquanaccount)
 
@@ -24,13 +24,13 @@ func Initcrond() {
 
 }
 
-func WalletAddCreate() {
-	var wallet WalletServer
-	wallet.CrondCreateAdd()
-
-}
-func WalletWithdraw() {
-	var wallet WalletServer
-	wallet.CrondWithPassToUdun()
-
-}
+//func WalletAddCreate() {
+//	var wallet WalletServer
+//	wallet.CrondCreateAdd()
+//
+//}
+//func WalletWithdraw() {
+//	var wallet WalletServer
+//	wallet.CrondWithPassToUdun()
+//
+//}

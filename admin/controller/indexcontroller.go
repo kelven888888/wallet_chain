@@ -73,10 +73,10 @@ func (this *IndexController) Console(ctx *gin.Context) {
 			marketopen = 1
 		}
 		var undoWithdrawcount int64
-		global.SHOP_DB.Model(model.UsdtWithdrawModel{}).Where("status=0").Count(&undoWithdrawcount)
+		//global.SHOP_DB.Model(model.UsdtWithdrawModel{}).Where("status=0").Count(&undoWithdrawcount)
 
 		var rechargecount int64
-		global.SHOP_DB.Model(model.FundRecharge{}).Count(&rechargecount)
+		//global.SHOP_DB.Model(model.FundRecharge{}).Count(&rechargecount)
 
 		totalnum := undoWithdrawcount + rechargecount
 
