@@ -3,8 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"gorm.io/gorm"
 	"strconv"
 	"strings"
+	dbmodel "wallet_chain.com/admin/model"
+	"wallet_chain.com/global"
 	"wallet_chain.com/model"
 
 	"github.com/gin-gonic/gin"
@@ -13,379 +16,177 @@ import (
 
 // SQLGetTAppConfigIntValueByK 查询配置
 func SQLGetTAppConfigIntValueByK(ctx context.Context, tx mcommon.DbExeAble, k string) (int64, error) {
-	var row model.DBTAppConfigInt
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&row,
-		`SELECT
-    v
-FROM
-	t_app_config_int
-WHERE
-	k=:k
-LIMIT 1`,
-		gin.H{
-			"k": k,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	if !ok {
+	var parm dbmodel.OtherParam
+	global.SHOP_DB.Model(dbmodel.OtherParam{}).Where("`key`=?", k).Find(&parm)
+	if parm.Value == "" {
 		return 0, fmt.Errorf("no app config int of: %s", k)
 	}
-	return row.V, nil
+	value, _ := strconv.ParseInt(parm.Value, 10, 64)
+	return value, nil
 }
 
 // SQLGetTAppConfigStrValueByK 查询配置
 func SQLGetTAppConfigStrValueByK(ctx context.Context, tx mcommon.DbExeAble, k string) (string, error) {
-	var row model.DBTAppConfigStr
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&row,
-		`SELECT
-    v
-FROM
-	t_app_config_str
-WHERE
-	k=:k
-LIMIT 1`,
-		gin.H{
-			"k": k,
-		},
-	)
-	if err != nil {
-		return "", err
+	var parm dbmodel.OtherParam
+	global.SHOP_DB.Model(dbmodel.OtherParam{}).Where("`key`=?", k).Find(&parm)
+	if parm.Value == "" {
+		return "", fmt.Errorf("no app config int of: %s", k)
 	}
-	if !ok {
-		return "", fmt.Errorf("no app config str of: %s", k)
-	}
-	return row.V, nil
+
+	return parm.Value, nil
+
 }
 
-// SQLGetTAppStatusIntValueByK 查询配置
-func SQLGetTAppStatusIntValueByK(ctx context.Context, tx mcommon.DbExeAble, k string) (int64, error) {
-	var row model.DBTAppStatusInt
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&row,
-		`SELECT
-    v
-FROM
-	t_app_status_int
-WHERE
-	k=:k
-LIMIT 1`,
-		gin.H{
-			"k": k,
-		},
-	)
+// SQLGetTAppConfigStrValueByK 查询配置
+func SQLGetTProduct() (dbmodel.TProduct, error) {
+	var parm dbmodel.TProduct
+	global.SHOP_DB.Model(dbmodel.TProduct{}).Find(&parm)
+	if parm.Id == 0 {
+		return parm, nil
+	}
+
+	return parm, nil
+
+}
+func SQLethGetHotADDRESSS(k string) ([]dbmodel.Account, error) {
+	var account []dbmodel.Account
+	global.SHOP_DB.Model(dbmodel.Account{}).Where("`chain`=?", k).Find(&account)
+
+	return account, nil
+
+}
+func SQLethGetHotADDRESS(k string) (string, error) {
+	var TAppConfigToken dbmodel.TAppConfigToken
+	global.SHOP_DB.Model(dbmodel.TAppConfigToken{}).Where("`chain`=?", k).Limit(1).Find(&TAppConfigToken)
+
+	return TAppConfigToken.HotAddress, nil
+
+}
+func UpdateTransationhandeltimeadd(id int64) error {
+	var transactions dbmodel.Transactions
+	err := global.SHOP_DB.Model(dbmodel.Transactions{}).Where("`id`=?", id).Find(&transactions).Updates(dbmodel.Transactions{
+		HandelTimes: transactions.HandelTimes + 1,
+	}).Error
+
 	if err != nil {
-		return 0, err
+
+		global.SHOP_LOG.Error(err.Error())
+		return err
 	}
-	if !ok {
-		return 0, fmt.Errorf("no app status int of: %s", k)
+	return nil
+
+}
+
+// SQLGetTAppStatusIntValueByK
+func SQLGetTAppStatusIntValueByK(ctx context.Context, tx mcommon.DbExeAble, k string) (int64, error) {
+	var parm dbmodel.OtherParam
+	global.SHOP_DB.Model(dbmodel.OtherParam{}).Where("`key`=?", k).Find(&parm)
+	if parm.Value == "" {
+		return 0, fmt.Errorf("no app config int of: %s", k)
 	}
-	return row.V, nil
+	value, _ := strconv.ParseInt(parm.Value, 10, 64)
+	return value, nil
 }
 
 // SQLGetTAddressKeyFreeCount 获取剩余可用地址数
 func SQLGetTAddressKeyFreeCount(ctx context.Context, tx mcommon.DbExeAble, symbol string) (int64, error) {
 	var count int64
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&count,
-		`SELECT
-	IFNULL(COUNT(*), 0)
-FROM
-	t_address_key
-WHERE
-	use_tag=0
-	AND symbol=:symbol`,
-		gin.H{
-			"symbol": symbol,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	if !ok {
-		return 0, nil
-	}
+	global.SHOP_DB.Model(dbmodel.Account{}).Where("chain=? and status=-1 and account_type=1", symbol).Count(&count)
+
 	return count, nil
 }
 
-// SQLSelectTAddressKeyColByTagAndSymbol 根据ids获取
-func SQLSelectTAddressKeyColByTagAndSymbol(ctx context.Context, tx mcommon.DbExeAble, cols []string, useTag int64, symbol string) ([]*model.DBTAddressKey, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_address_key
-WHERE
-	use_tag=:use_tag
-	AND symbol=:symbol
-ORDER BY
-	id`)
-
-	var rows []*model.DBTAddressKey
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"use_tag": useTag,
-			"symbol":  symbol,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
 // SQLSelectTAddressKeyColByAddress 根据ids获取
-func SQLSelectTAddressKeyColByAddress(ctx context.Context, tx mcommon.DbExeAble, cols []string, addresses []string) ([]*model.DBTAddressKey, error) {
+func SQLSelectTAddressKeyColByAddress(addresses []string) ([]*dbmodel.Account, error) {
 	if len(addresses) == 0 {
 		return nil, nil
 	}
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_address_key
-WHERE
-	address IN (:addresses)`)
+	var rows []*dbmodel.Account
+	global.SHOP_DB.Where("address in?", addresses).Find(&rows)
+	//global.SHOP_DB.Find(&rows)
 
-	var rows []*model.DBTAddressKey
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"addresses": addresses,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
 	return rows, nil
+}
+func SQLgetEXitTRAN(txid string) (bool, error) {
+	if len(txid) == 0 {
+		return false, nil
+	}
+	var rows dbmodel.Transactions
+	global.SHOP_DB.Where("tx_id =?", txid).Find(&rows)
+	//global.SHOP_DB.Find(&rows)
+
+	if rows.Id > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 // SQLUpdateTAppStatusIntByK 更新
 func SQLUpdateTAppStatusIntByK(ctx context.Context, tx mcommon.DbExeAble, row *model.DBTAppStatusInt) (int64, error) {
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_app_status_int
-SET
-    v=:v
-WHERE
-	k=:k`,
-		gin.H{
-			"k": row.K,
-			"v": row.V,
-		},
-	)
+	var parms dbmodel.OtherParam
+	err := global.SHOP_DB.Model(dbmodel.OtherParam{}).Where("`key`=?", row.K).Find(&parms).Updates(dbmodel.OtherParam{
+		Value: strconv.Itoa(int(row.V)),
+	}).Error
 	if err != nil {
 		return 0, err
 	}
-	return count, nil
+	return int64(parms.Id), nil
 }
 
 // SQLUpdateTAppStatusIntByKGreater 更新
-func SQLUpdateTAppStatusIntByKGreater(ctx context.Context, tx mcommon.DbExeAble, row *model.DBTAppStatusInt) (int64, error) {
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_app_status_int
-SET
-    v=:v
-WHERE
-	k=:k
-	AND v<:v`,
-		gin.H{
-			"k": row.K,
-			"v": row.V,
-		},
-	)
+func SQLUpdateTAppStatusIntByKGreater(ctx context.Context, tx mcommon.DbExeAble, row *model.DBTAppStatusInt, rows *model.DBTAppStatusInt) (int64, error) {
+	err := global.SHOP_DB.Model(dbmodel.OtherParam{}).Where("`key`=?", row.K).Updates(dbmodel.OtherParam{
+		Value: strconv.Itoa(int(row.V)),
+	}).Error
 	if err != nil {
 		return 0, err
 	}
-	return count, nil
-}
-
-// SQLUpdateTAppConfigStrByK 更新
-func SQLUpdateTAppConfigStrByK(ctx context.Context, tx mcommon.DbExeAble, row *model.DBTAppConfigStr) (int64, error) {
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_app_config_str
-SET
-    v=:v
-WHERE
-	k=:k`,
-		gin.H{
-			"k": row.K,
-			"v": row.V,
-		},
-	)
+	err = global.SHOP_DB.Model(dbmodel.OtherParam{}).Where("`key`=?", rows.K).Updates(dbmodel.OtherParam{
+		Value: strconv.Itoa(int(rows.V)),
+	}).Error
 	if err != nil {
 		return 0, err
 	}
-	return count, nil
-}
-
-// SQLSelectTTxColByOrgForUpdate 获取未整理交易
-func SQLSelectTTxColByOrgForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, orgStatus int64) ([]*model.DBTTx, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx
-WHERE
-	org_status=:org_status
-FOR UPDATE`)
-
-	var rows []*model.DBTTx
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"org_status": orgStatus,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
+	return 1, nil
 }
 
 // SQLGetTSendMaxNonce 获取地址的nonce
-func SQLGetTSendMaxNonce(ctx context.Context, tx mcommon.DbExeAble, address string) (int64, error) {
+func SQLGetTSendMaxNonce(address string) (int64, error) {
 	var i int64
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&i,
-		`SELECT 
-	IFNULL(MAX(nonce), -1)
-FROM
-	t_send
-WHERE
-	from_address=:address
-LIMIT 1`,
-		gin.H{
-			"address": address,
-		},
-	)
+
+	err := global.SHOP_DB.Raw("SELECT IFNULL(MAX(nonce), -1) FROM t_send WHERE from_address=? LIMIT 1", address).Scan(&i).Error
 	if err != nil {
-		return 0, err
-	}
-	if !ok {
+		global.SHOP_LOG.Error(err.Error())
 		return 0, nil
 	}
+
 	return i + 1, nil
 }
 
 // SQLGetTSendPendingBalanceReal 获取地址的打包数额
 func SQLGetTSendPendingBalanceReal(ctx context.Context, tx mcommon.DbExeAble, address string) (string, error) {
-	var i string
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&i,
-		`SELECT 
+	i := "0"
+
+	query := `SELECT 
 	IFNULL(SUM(CAST(balance_real as DECIMAL(65,18))), "0")
 FROM
 	t_send
 WHERE
-	from_address=:address
+	from_address=?
 	AND handle_status<2
-LIMIT 1`,
-		gin.H{
-			"address": address,
-		},
-	)
-	if err != nil {
-		return "0", err
-	}
-	if !ok {
-		return "0", nil
-	}
-	return i, nil
-}
-
-// SQLGetTSendEosPendingBalanceReal 获取地址的打包数额
-func SQLGetTSendEosPendingBalanceReal(ctx context.Context, tx mcommon.DbExeAble, address string) (string, error) {
-	var i string
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&i,
-		`SELECT 
-	IFNULL(SUM(CAST(balance_real as DECIMAL(65,4))), "0")
-FROM
-	t_send_eos
-WHERE
-	from_address=:address
-	AND handle_status<2
-LIMIT 1`,
-		gin.H{
-			"address": address,
-		},
-	)
-	if err != nil {
-		return "0", err
-	}
-	if !ok {
-		return "0", nil
-	}
+LIMIT 1`
+	global.SHOP_DB.Raw(query, address).Scan(&i)
 	return i, nil
 }
 
 // SQLGetTAddressKeyColByAddress 根据address查询
-func SQLGetTAddressKeyColByAddress(ctx context.Context, tx mcommon.DbExeAble, cols []string, address string) (*model.DBTAddressKey, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_address_key
-WHERE
-	address=:address`)
-
-	var row model.DBTAddressKey
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&row,
-		query.String(),
-		gin.H{
-			"address": address,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
+func SQLGetTAddressKeyColByAddress(ctx context.Context, tx mcommon.DbExeAble, cols []string, address string) (*dbmodel.Account, error) {
+	var account dbmodel.Account
+	global.SHOP_DB.Where("address=?", address).Find(&account)
+	if account.Id == 0 {
 		return nil, nil
 	}
-	return &row, nil
+	return &account, nil
 }
 
 // SQLUpdateTTxOrgStatusByIDs 更新
@@ -446,64 +247,6 @@ WHERE
 	return count, nil
 }
 
-// SQLUpdateTTxErc20StatusByIDs 更新
-func SQLUpdateTTxErc20StatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTTxErc20) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_tx_erc20
-SET
-    handle_status=:handle_status,
-    handle_msg=:handle_msg,
-    handle_time=:handle_time
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":           ids,
-			"handle_status": row.HandleStatus,
-			"handle_msg":    row.HandleMsg,
-			"handle_time":   row.HandleTime,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLUpdateTTxEosStatusByIDs 更新
-func SQLUpdateTTxEosStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTTxEos) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_tx_eos
-SET
-    handle_status=:handle_status,
-    handle_msg=:handle_msg,
-    handle_at=:handle_at
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":           ids,
-			"handle_status": row.HandleStatus,
-			"handle_msg":    row.HandleMsg,
-			"handle_at":     row.HandleAt,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
 // SQLUpdateTSendStatusByIDs 更新
 func SQLUpdateTSendStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTSend) (int64, error) {
 	if len(ids) == 0 {
@@ -533,89 +276,39 @@ WHERE
 	return count, nil
 }
 
-// SQLUpdateTSendEosStatusByIDs 更新
-func SQLUpdateTSendEosStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTSendEos) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_send_eos
-SET
-    handle_status=:handle_status,
-    handle_msg=:handle_msg,
-    handle_at=:handle_at
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":           ids,
-			"handle_status": row.HandleStatus,
-			"handle_msg":    row.HandleMsg,
-			"handle_at":     row.HandleAt,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
 // SQLSelectTSendColByStatus 根据ids获取
-func SQLSelectTSendColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTSend, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_send
-WHERE
-	handle_status=:handle_status
-ORDER BY id`)
-
-	var rows []*model.DBTSend
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-		},
-	)
+func SQLSelectTSendColByStatus(status int64) ([]*dbmodel.TSend, error) {
+	//	query := strings.Builder{}
+	//	query.WriteString("SELECT\n")
+	//	query.WriteString(strings.Join(cols, ",\n"))
+	//	query.WriteString(`
+	//FROM
+	//	t_send
+	//WHERE
+	//	handle_status=:handle_status
+	//ORDER BY id`)
+	//
+	//	var rows []*model.DBTSend
+	//	err := mcommon.DbSelectNamedContent(
+	//		ctx,
+	//		tx,
+	//		&rows,
+	//		query.String(),
+	//		gin.H{
+	//			"handle_status": status,
+	//		},
+	//	)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	var send []*dbmodel.TSend
+	err := global.SHOP_DB.Model(dbmodel.TSend{}).Where("handle_status=?", status).Find(&send).Error
 	if err != nil {
+		global.SHOP_LOG.Error(err.Error())
 		return nil, err
 	}
-	return rows, nil
-}
 
-// SQLSelectTSendEosColByStatus 根据ids获取
-func SQLSelectTSendEosColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTSendEos, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_send_eos
-WHERE
-	handle_status=:handle_status
-ORDER BY id`)
-
-	var rows []*model.DBTSendEos
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
+	return send, nil
 }
 
 // SQLSelectTWithdrawColByStatus 根据ids获取
@@ -629,36 +322,6 @@ FROM
 WHERE
 	handle_status=:handle_status
 	AND symbol IN (:symbols)`)
-
-	var rows []*model.DBTWithdraw
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-			"symbols":       symbols,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTWithdrawColByStatusForUpdate 根据ids获取
-func SQLSelectTWithdrawColByStatusForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64, symbols []string) ([]*model.DBTWithdraw, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_withdraw
-WHERE
-	handle_status=:handle_status
-	AND symbol IN (:symbols)
-FOR UPDATE`)
 
 	var rows []*model.DBTWithdraw
 	err := mcommon.DbSelectNamedContent(
@@ -879,39 +542,6 @@ WHERE
 	return count, nil
 }
 
-// SQLGetTAddressKeyColFreeForUpdate 根据id查询
-func SQLGetTAddressKeyColFreeForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, symbol string) (*model.DBTAddressKey, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_address_key
-WHERE
-	use_tag=0
-	AND symbol=:symbol
-LIMIT 1
-FOR UPDATE`)
-
-	var row model.DBTAddressKey
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&row,
-		query.String(),
-		gin.H{
-			"symbol": symbol,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, nil
-	}
-	return &row, nil
-}
-
 // SQLSelectTTxColByStatus 根据ids获取
 func SQLSelectTTxColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTTx, error) {
 	query := strings.Builder{}
@@ -924,33 +554,6 @@ WHERE
 	handle_status=:handle_status`)
 
 	var rows []*model.DBTTx
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTTxEosColByStatus 根据ids获取
-func SQLSelectTTxEosColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTTxEos, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_eos
-WHERE
-	handle_status=:handle_status`)
-
-	var rows []*model.DBTTxEos
 	err := mcommon.DbSelectNamedContent(
 		ctx,
 		tx,
@@ -1022,77 +625,42 @@ WHERE
 }
 
 // SQLSelectTAppConfigTokenColAll 根据ids获取
-func SQLSelectTAppConfigTokenColAll(ctx context.Context, tx mcommon.DbExeAble, cols []string) ([]*model.DBTAppConfigToken, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_app_config_token`)
-
-	var rows []*model.DBTAppConfigToken
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{},
-	)
+func SQLSelectTAppConfigTokenColAll(CoinSymbol string) ([]*dbmodel.TAppConfigToken, error) {
+	//	query := strings.Builder{}
+	//	query.WriteString("SELECT\n")
+	//	query.WriteString(strings.Join(cols, ",\n"))
+	//	query.WriteString(`
+	//FROM
+	//	t_app_config_token`)
+	//
+	//	var rows []*model.DBTAppConfigToken
+	//	err := mcommon.DbSelectNamedContent(
+	//		ctx,
+	//		tx,
+	//		&rows,
+	//		query.String(),
+	//		gin.H{},
+	//	)
+	var mtoken []*dbmodel.TAppConfigToken
+	err := global.SHOP_DB.Model(dbmodel.TAppConfigToken{}).Where("chain=?", CoinSymbol).Find(&mtoken).Error
 	if err != nil {
 		return nil, err
 	}
-	return rows, nil
+	return mtoken, nil
 }
 
 // SQLSelectTTxErc20ColByStatus 根据ids获取
-func SQLSelectTTxErc20ColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTTxErc20, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_erc20
-WHERE
-	handle_status=:handle_status`)
-
-	var rows []*model.DBTTxErc20
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+func SQLSelectTTxErc20ColByStatus(status int64) ([]*dbmodel.Transactions, error) {
+	var rows []*dbmodel.Transactions
+	global.SHOP_DB.Model(dbmodel.Transactions{}).Where("status=? and handel_times<3", status).Find(&rows)
 	return rows, nil
 }
 
 // SQLSelectTTxErc20ColByOrgForUpdate 获取未整理交易
-func SQLSelectTTxErc20ColByOrgForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, orgStatuses []int64) ([]*model.DBTTxErc20, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_erc20
-WHERE
-	org_status IN (:org_status)
-FOR UPDATE`)
+func SQLSelectTTxErc20ColByOrgForUpdate(orgStatuses []int64, token_symbol []string) ([]*dbmodel.Transactions, error) {
 
-	var rows []*model.DBTTxErc20
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"org_status": orgStatuses,
-		},
-	)
+	var rows []*dbmodel.Transactions
+	err := global.SHOP_DB.Model(dbmodel.Transactions{}).Where("org_status in ? and token_symbol in ?", orgStatuses, token_symbol).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -1100,722 +668,42 @@ FOR UPDATE`)
 }
 
 // SQLUpdateTTxErc20OrgStatusByIDs 更新
-func SQLUpdateTTxErc20OrgStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTTxErc20) (int64, error) {
+func SQLUpdateTTxErc20OrgStatusByIDs(db *gorm.DB, ids []int64, row model.DBTTxErc20) (int64, error) {
 	if len(ids) == 0 {
 		return 0, nil
 	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_tx_erc20
-SET
-    org_status=:org_status,
-    org_msg=:org_msg,
-    org_time=:org_time
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":        ids,
-			"org_status": row.OrgStatus,
-			"org_msg":    row.OrgMsg,
-			"org_time":   row.OrgTime,
+	//	count, err := mcommon.DbExecuteCountNamedContent(
+	//		ctx,
+	//		tx,
+	//		`UPDATE
+	//	t_tx_erc20
+	//SET
+	//    org_status=:org_status,
+	//    org_msg=:org_msg,
+	//    org_time=:org_time
+	//WHERE
+	//	id IN (:ids)`,
+	//		gin.H{
+	//			"ids":        ids,
+	//			"org_status": row.OrgStatus,
+	//			"org_msg":    row.OrgMsg,
+	//			"org_time":   row.OrgTime,
+	//		},
+	//	)
+	//	if err != nil {
+	//		return 0, err
+	//	}
+	err := db.Model(dbmodel.Transactions{}).Where("id in ?", ids).Updates(
+		dbmodel.Transactions{
+			OrgStatus: row.OrgStatus,
+			OrgMsg:    row.OrgMsg,
+			OrgTime:   row.OrgTime,
 		},
-	)
+	).Error
 	if err != nil {
+		db.Rollback()
+		global.SHOP_LOG.Error(err.Error())
 		return 0, err
 	}
-	return count, nil
-}
-
-// SQLSelectTTxBtcUxtoColByTxIDs 根据ids获取
-func SQLSelectTTxBtcUxtoColByTxIDs(ctx context.Context, tx mcommon.DbExeAble, cols []string, txHashes []string) ([]*model.DBTTxBtcUxto, error) {
-	if len(cols) == 0 {
-		return nil, nil
-	}
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc_uxto
-WHERE
-	tx_id IN (:tx_ids)`)
-
-	var rows []*model.DBTTxBtcUxto
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"tx_ids": txHashes,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLCreateManyTTxBtcUxtoUpdate 创建多个
-func SQLCreateManyTTxBtcUxtoUpdate(ctx context.Context, tx mcommon.DbExeAble, rows []*model.DBTTxBtcUxto) (int64, error) {
-	if len(rows) == 0 {
-		return 0, nil
-	}
-	var args []interface{}
-	for _, row := range rows {
-		args = append(
-			args,
-			[]interface{}{
-				row.ID,
-				row.UxtoType,
-				row.BlockHash,
-				row.TxID,
-				row.VoutN,
-				row.VoutAddress,
-				row.VoutValue,
-				row.VoutScript,
-				row.CreateTime,
-				row.SpendTxID,
-				row.SpendN,
-				row.HandleStatus,
-				row.HandleMsg,
-				row.HandleTime,
-			},
-		)
-	}
-
-	var count int64
-	var err error
-	if len(rows[0].BlockHash) > 0 {
-		count, err = mcommon.DbExecuteCountManyContent(
-			ctx,
-			tx,
-			`INSERT INTO t_tx_btc_uxto (
-    id,
-    uxto_type,
-    block_hash,
-    tx_id,
-    vout_n,
-    vout_address,
-    vout_value,
-    vout_script,
-    create_time,
-    spend_tx_id,
-    spend_n,
-    handle_status,
-    handle_msg,
-    handle_time
-) VALUES
-    %s
-ON DUPLICATE KEY UPDATE 
-	block_hash=VALUES(block_hash),
-	spend_tx_id=VALUES(spend_tx_id),
-	spend_n=VALUES(spend_n),
-	handle_status=VALUES(handle_status),
-	handle_msg=VALUES(handle_msg),
-	handle_time=VALUES(handle_time)`,
-			len(rows),
-			args...,
-		)
-	} else {
-		count, err = mcommon.DbExecuteCountManyContent(
-			ctx,
-			tx,
-			`INSERT INTO t_tx_btc_uxto (
-    id,
-    uxto_type,
-    block_hash,
-    tx_id,
-    vout_n,
-    vout_address,
-    vout_value,
-    vout_script,
-    create_time,
-    spend_tx_id,
-    spend_n,
-    handle_status,
-    handle_msg,
-    handle_time
-) VALUES
-    %s
-ON DUPLICATE KEY UPDATE 
-	spend_tx_id=VALUES(spend_tx_id),
-	spend_n=VALUES(spend_n),
-	handle_status=VALUES(handle_status),
-	handle_msg=VALUES(handle_msg),
-	handle_time=VALUES(handle_time)`,
-			len(rows),
-			args...,
-		)
-	}
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLSelectTTxBtcUxtoColToOrgForUpdate 根据ids获取
-func SQLSelectTTxBtcUxtoColToOrgForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, uxtoType int64) ([]*model.DBTTxBtcUxto, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc_uxto
-WHERE
-	handle_status=0
-	AND uxto_type=:uxto_type
-ORDER BY
-`)
-	if uxtoType == UxtoTypeTx {
-		query.WriteString("	id")
-	} else {
-		query.WriteString("	CAST(vout_value as DECIMAL(65,8)) DESC")
-	}
-	query.WriteString("\nFOR UPDATE")
-
-	var rows []*model.DBTTxBtcUxto
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"uxto_type": uxtoType,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTTxBtcUxtoColByAddressAndTypeForUpdate 根据ids获取
-func SQLSelectTTxBtcUxtoColByAddressAndTypeForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, address string, uxtoType int64) ([]*model.DBTTxBtcUxto, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc_uxto
-WHERE
-	vout_address=:vout_address
-	AND handle_status=0
-	AND uxto_type=:uxto_type
-ORDER BY
-`)
-	switch uxtoType {
-	case UxtoTypeTx:
-		query.WriteString(" id")
-	case UxtoTypeOmni:
-		query.WriteString(" CAST(vout_value as DECIMAL(65,8))")
-	case UxtoTypeOmniHot:
-		query.WriteString(" CAST(vout_value as DECIMAL(65,8))")
-	default:
-		query.WriteString(" CAST(vout_value as DECIMAL(65,8)) DESC")
-	}
-	query.WriteString("\nFOR UPDATE")
-	var rows []*model.DBTTxBtcUxto
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"vout_address": address,
-			"uxto_type":    uxtoType,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTTxBtcUxtoColByAddressesAndTypeForUpdate 根据ids获取
-func SQLSelectTTxBtcUxtoColByAddressesAndTypeForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, addresses []string, uxtoType int64) ([]*model.DBTTxBtcUxto, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc_uxto
-WHERE
-	vout_address IN (:vout_address)
-	AND handle_status=0
-	AND uxto_type=:uxto_type
-ORDER BY
-`)
-	switch uxtoType {
-	case UxtoTypeTx:
-		query.WriteString(" vout_address, id")
-	case UxtoTypeOmni:
-		query.WriteString(" vout_address, CAST(vout_value as DECIMAL(65,8))")
-	case UxtoTypeOmniHot:
-		query.WriteString(" vout_address, CAST(vout_value as DECIMAL(65,8))")
-	default:
-		query.WriteString(" vout_address, CAST(vout_value as DECIMAL(65,8)) DESC")
-	}
-	query.WriteString("\nFOR UPDATE")
-	var rows []*model.DBTTxBtcUxto
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"vout_address": addresses,
-			"uxto_type":    uxtoType,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTSendBtcColByStatus 根据ids获取
-func SQLSelectTSendBtcColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTSendBtc, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_send_btc
-WHERE
-	handle_status=:handle_status`)
-
-	var rows []*model.DBTSendBtc
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLUpdateTSendBtcByIDs 更新
-func SQLUpdateTSendBtcByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row *model.DBTSendBtc) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_send_btc
-SET
-    handle_status=:handle_status,
-    handle_msg=:handle_msg,
-    handle_time=:handle_time
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":           ids,
-			"handle_status": row.HandleStatus,
-			"handle_msg":    row.HandleMsg,
-			"handle_time":   row.HandleTime,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLCreateManyTWithdrawUpdate 创建多个
-func SQLCreateManyTWithdrawUpdate(ctx context.Context, tx mcommon.DbExeAble, rows []*model.DBTWithdraw) (int64, error) {
-	if len(rows) == 0 {
-		return 0, nil
-	}
-	var args []interface{}
-	if rows[0].ID > 0 {
-		for _, row := range rows {
-			args = append(
-				args,
-				[]interface{}{
-					row.ID,
-					row.ProductID,
-					row.OutSerial,
-					row.ToAddress,
-					row.Memo,
-					row.Symbol,
-					row.BalanceReal,
-					row.TxHash,
-					row.CreateTime,
-					row.HandleStatus,
-					row.HandleMsg,
-					row.HandleTime,
-				},
-			)
-		}
-	} else {
-		for _, row := range rows {
-			args = append(
-				args,
-				[]interface{}{
-					row.ProductID,
-					row.OutSerial,
-					row.ToAddress,
-					row.Memo,
-					row.Symbol,
-					row.BalanceReal,
-					row.TxHash,
-					row.CreateTime,
-					row.HandleStatus,
-					row.HandleMsg,
-					row.HandleTime,
-				},
-			)
-		}
-	}
-	var count int64
-	var err error
-	if rows[0].ID > 0 {
-		count, err = mcommon.DbExecuteCountManyContent(
-			ctx,
-			tx,
-			`INSERT INTO t_withdraw (
-    id,
-    product_id,
-    out_serial,
-    to_address,
-	memo,
-    symbol,
-    balance_real,
-    tx_hash,
-    create_time,
-    handle_status,
-    handle_msg,
-    handle_time
-) VALUES
-    %s
-ON DUPLICATE KEY UPDATE 
-	tx_hash=VALUES(tx_hash),
-	handle_status=VALUES(handle_status),
-	handle_msg=VALUES(handle_msg),
-	handle_time=VALUES(handle_time)`,
-			len(rows),
-			args...,
-		)
-	} else {
-		count, err = mcommon.DbExecuteCountManyContent(
-			ctx,
-			tx,
-			`INSERT INTO t_withdraw (
-    product_id,
-    out_serial,
-    to_address,
-	memo,
-    symbol,
-    balance_real,
-    tx_hash,
-    create_time,
-    handle_status,
-    handle_msg,
-    handle_time
-) VALUES
-    %s
-ON DUPLICATE KEY UPDATE 
-	tx_hash=VALUES(tx_hash),
-	handle_status=VALUES(handle_status),
-	handle_msg=VALUES(handle_msg),
-	handle_time=VALUES(handle_time)`,
-			len(rows),
-			args...,
-		)
-	}
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLSelectTTxBtcColByStatus 根据ids获取
-func SQLSelectTTxBtcColByStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, status int64) ([]*model.DBTTxBtc, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc
-WHERE
-	handle_status=:handle_status`)
-
-	var rows []*model.DBTTxBtc
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": status,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLUpdateTTxBtcStatusByIDs 更新
-func SQLUpdateTTxBtcStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTTxBtc) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_tx_btc
-SET
-    handle_status=:handle_status,
-    handle_msg=:handle_msg,
-    handle_time=:handle_time
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":           ids,
-			"handle_status": row.HandleStatus,
-			"handle_msg":    row.HandleMsg,
-			"handle_time":   row.HandleTime,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLSelectTAppConfigTokenBtcColAll 根据ids获取
-func SQLSelectTAppConfigTokenBtcColAll(ctx context.Context, tx mcommon.DbExeAble, cols []string) ([]*model.DBTAppConfigTokenBtc, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_app_config_token_btc`)
-
-	var rows []*model.DBTAppConfigTokenBtc
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTTxBtcTokenColByOrgStatusForUpdate 根据ids获取
-func SQLSelectTTxBtcTokenColByOrgStatusForUpdate(ctx context.Context, tx mcommon.DbExeAble, cols []string, orgStatus int64) ([]*model.DBTTxBtcToken, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc_token
-WHERE
-	org_status=:org_status
-FOR UPDATE`)
-
-	var rows []*model.DBTTxBtcToken
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"org_status": orgStatus,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTTxBtcTokenColByHandleStatus 根据ids获取
-func SQLSelectTTxBtcTokenColByHandleStatus(ctx context.Context, tx mcommon.DbExeAble, cols []string, handleStatus int64) ([]*model.DBTTxBtcToken, error) {
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_tx_btc_token
-WHERE
-	handle_status=:handle_status`)
-
-	var rows []*model.DBTTxBtcToken
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"handle_status": handleStatus,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLSelectTAppConfigTokenBtcColByIndexes 根据ids获取
-func SQLSelectTAppConfigTokenBtcColByIndexes(ctx context.Context, tx mcommon.DbExeAble, cols []string, tokenIndexes []int64) ([]*model.DBTAppConfigTokenBtc, error) {
-	if len(tokenIndexes) == 0 {
-		return nil, nil
-	}
-	query := strings.Builder{}
-	query.WriteString("SELECT\n")
-	query.WriteString(strings.Join(cols, ",\n"))
-	query.WriteString(`
-FROM
-	t_app_config_token_btc
-WHERE
-	token_index IN (:token_index)`)
-
-	var rows []*model.DBTAppConfigTokenBtc
-	err := mcommon.DbSelectNamedContent(
-		ctx,
-		tx,
-		&rows,
-		query.String(),
-		gin.H{
-			"token_index": tokenIndexes,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-// SQLUpdateTTxBtcTokenOrgStatusByIDs 更新
-func SQLUpdateTTxBtcTokenOrgStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTTxBtcToken) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_tx_btc_token
-SET
-    org_status=:org_status,
-    org_msg=:org_msg,
-    org_at=:org_at
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":        ids,
-			"org_status": row.OrgStatus,
-			"org_msg":    row.OrgMsg,
-			"org_at":     row.OrgAt,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLUpdateTTxBtcTokenHandleStatusByIDs 更新
-func SQLUpdateTTxBtcTokenHandleStatusByIDs(ctx context.Context, tx mcommon.DbExeAble, ids []int64, row model.DBTTxBtcToken) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-	count, err := mcommon.DbExecuteCountNamedContent(
-		ctx,
-		tx,
-		`UPDATE
-	t_tx_btc_token
-SET
-    handle_status=:handle_status,
-    handle_msg=:handle_msg,
-    handle_at=:handle_at
-WHERE
-	id IN (:ids)`,
-		gin.H{
-			"ids":           ids,
-			"handle_status": row.HandleStatus,
-			"handle_msg":    row.HandleMsg,
-			"handle_at":     row.HandleAt,
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-// SQLGetTSendBtcPendingBalanceReal 获取地址的打包数额
-func SQLGetTSendBtcPendingBalanceReal(ctx context.Context, tx mcommon.DbExeAble, address string, tokenIndex int64) (string, error) {
-	var i string
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&i,
-		`SELECT 
-	IFNULL(SUM(CAST(value as DECIMAL(65,8))), "0")
-FROM
-	t_tx_btc_token
-WHERE
-	from_address=:address
-	AND token_index=:token_index
-	AND handle_status<3
-LIMIT 1`,
-		gin.H{
-			"address":     address,
-			"token_index": tokenIndex,
-		},
-	)
-	if err != nil {
-		return "0", err
-	}
-	if !ok {
-		return "0", nil
-	}
-	return i, nil
-}
-
-// SQLGetTAddressMaxIntOfEos 根据id查询
-func SQLGetTAddressMaxIntOfEos(ctx context.Context, tx mcommon.DbExeAble) (int64, error) {
-	var address string
-	ok, err := mcommon.DbGetNamedContent(
-		ctx,
-		tx,
-		&address,
-		`SELECT
-	IFNULL(MAX(CAST(address AS UNSIGNED)),0)
-FROM
-	t_address_key
-WHERE
-	symbol="eos"`,
-		gin.H{},
-	)
-	if err != nil {
-		return 0, err
-	}
-	if !ok {
-		return 0, nil
-	}
-	addressInt, err := strconv.ParseInt(address, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return addressInt, nil
+	return int64(len(ids)), nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/moremorefun/mcommon"
 	"time"
+	admodel "wallet_chain.com/admin/model"
 	"wallet_chain.com/global"
 	"wallet_chain.com/model"
 	"wallet_chain.com/utils"
@@ -87,26 +88,14 @@ func LockWrap(name string, f func()) {
 }
 
 // SQLGetWithdrawMap 获取提币map
-func SQLGetWithdrawMap(ctx context.Context, tx mcommon.DbExeAble, cols []string, ids []int64) (map[int64]*model.DBTWithdraw, error) {
-	if !mcommon.IsStringInSlice(cols, model.DBColTWithdrawID) {
-		cols = append(cols, model.DBColTWithdrawID)
+func SQLGetWithdrawMap(ids []int64) (map[int64]*admodel.TWithdraw, error) {
+	itemMaps := make(map[int64]*admodel.TWithdraw)
+	var withdraw []*admodel.TWithdraw
+	global.SHOP_DB.Model(admodel.TWithdraw{}).Where("id in ?", ids).Find(&withdraw)
+	for _, itemRow := range withdraw {
+		itemMaps[itemRow.Id] = itemRow
 	}
-	itemMap := make(map[int64]*model.DBTWithdraw)
-	itemRows, err := model.SQLSelectTWithdrawCol(
-		ctx,
-		tx,
-		cols,
-		ids,
-		nil,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-	for _, itemRow := range itemRows {
-		itemMap[itemRow.ID] = itemRow
-	}
-	return itemMap, nil
+	return itemMaps, nil
 }
 
 // SQLGetProductMap 获取产品map
@@ -133,38 +122,41 @@ func SQLGetProductMap(ctx context.Context, tx mcommon.DbExeAble, cols []string, 
 }
 
 // SQLGetAppConfigTokenMap 获取代币map
-func SQLGetAppConfigTokenMap(ctx context.Context, tx mcommon.DbExeAble, cols []string, ids []int64) (map[int64]*model.DBTAppConfigToken, error) {
-	if !mcommon.IsStringInSlice(cols, model.DBColTAppConfigTokenID) {
-		cols = append(cols, model.DBColTAppConfigTokenID)
+func SQLGetAppConfigTokenMap() (map[int64]*admodel.TAppConfigToken, error) {
+	//if !mcommon.IsStringInSlice(cols, model.DBColTAppConfigTokenID) {
+	//	cols = append(cols, model.DBColTAppConfigTokenID)
+	//}
+	//itemMap := make(map[int64]*model.DBTAppConfigToken)
+	//itemRows, err := model.SQLSelectTAppConfigTokenCol(
+	//	ctx,
+	//	tx,
+	//	cols,
+	//	ids,
+	//	nil,
+	//	nil,
+	//)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//for _, itemRow := range itemRows {
+	//	itemMap[itemRow.ID] = itemRow
+	//}
+	var modeltoken []*admodel.TAppConfigToken
+	itemMaps := make(map[int64]*admodel.TAppConfigToken)
+	global.SHOP_DB.Model(admodel.TAppConfigToken{}).Find(&modeltoken)
+	for _, v := range modeltoken {
+		itemMaps[v.Id] = v
 	}
-	itemMap := make(map[int64]*model.DBTAppConfigToken)
-	itemRows, err := model.SQLSelectTAppConfigTokenCol(
-		ctx,
-		tx,
-		cols,
-		ids,
-		nil,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-	for _, itemRow := range itemRows {
-		itemMap[itemRow.ID] = itemRow
-	}
-	return itemMap, nil
+	return itemMaps, nil
 }
 
 // SQLGetAddressKeyMap 获取地址map
-func SQLGetAddressKeyMap(ctx context.Context, tx mcommon.DbExeAble, cols []string, addresses []string) (map[string]*model.DBTAddressKey, error) {
+func SQLGetAddressKeyMap(ctx context.Context, tx mcommon.DbExeAble, cols []string, addresses []string) (map[string]*admodel.Account, error) {
 	if !mcommon.IsStringInSlice(cols, model.DBColTAddressKeyAddress) {
 		cols = append(cols, model.DBColTAddressKeyAddress)
 	}
-	itemMap := make(map[string]*model.DBTAddressKey)
+	itemMap := make(map[string]*admodel.Account)
 	itemRows, err := SQLSelectTAddressKeyColByAddress(
-		ctx,
-		tx,
-		cols,
 		addresses,
 	)
 	if err != nil {

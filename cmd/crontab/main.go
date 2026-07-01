@@ -34,22 +34,22 @@ func Init() {
 		if err != nil {
 			mcommon.Log.Errorf("cron add func error: %#v", err)
 		}
-		// 检测 eth 冲币
-		_, err = c.AddFunc("@every 5s", heth.CheckBlockSeek)
-		if err != nil {
-			mcommon.Log.Errorf("cron add func error: %#v", err)
-		}
-		// 检测 eth 零钱整理
-		_, err = c.AddFunc("@every 10m", heth.CheckAddressOrg)
-		if err != nil {
-			mcommon.Log.Errorf("cron add func error: %#v", err)
-		}
-		// 检测 eth 提币
-		_, err = c.AddFunc("@every 3m", heth.CheckWithdraw)
-		if err != nil {
-			mcommon.Log.Errorf("cron add func error: %#v", err)
-		}
-		// 检测 eth 发送交易
+		//// 检测 eth 冲币
+		//_, err = c.AddFunc("@every 5s", heth.CheckBlockSeek)
+		//if err != nil {
+		//	mcommon.Log.Errorf("cron add func error: %#v", err)
+		//}
+		//// 检测 eth 零钱整理
+		//_, err = c.AddFunc("@every 10m", heth.CheckAddressOrg)
+		//if err != nil {
+		//	mcommon.Log.Errorf("cron add func error: %#v", err)
+		//}
+		//// 检测 eth 提币
+		//_, err = c.AddFunc("@every 3m", heth.CheckWithdraw)
+		//if err != nil {
+		//	mcommon.Log.Errorf("cron add func error: %#v", err)
+		//}
+		//// 检测 eth 发送交易
 		_, err = c.AddFunc("@every 5s", heth.CheckRawTxSend)
 		if err != nil {
 			mcommon.Log.Errorf("cron add func error: %#v", err)
@@ -59,16 +59,16 @@ func Init() {
 		if err != nil {
 			mcommon.Log.Errorf("cron add func error: %#v", err)
 		}
-		// 检测 eth 通知到账
-		_, err = c.AddFunc("@every 5s", heth.CheckTxNotify)
-		if err != nil {
-			mcommon.Log.Errorf("cron add func error: %#v", err)
-		}
-		// 检测 eth gas price
-		_, err = c.AddFunc("@every 5s", heth.CheckGasPrice)
-		if err != nil {
-			mcommon.Log.Errorf("cron add func error: %#v", err)
-		}
+		//// 检测 eth 通知到账
+		//_, err = c.AddFunc("@every 5s", heth.CheckTxNotify)
+		//if err != nil {
+		//	mcommon.Log.Errorf("cron add func error: %#v", err)
+		//}
+		//// 检测 eth gas price
+		//_, err = c.AddFunc("@every 5s", heth.CheckGasPrice)
+		//if err != nil {
+		//	mcommon.Log.Errorf("cron add func error: %#v", err)
+		//}
 
 		// --- erc20 ---
 		// 检测 erc20 冲币

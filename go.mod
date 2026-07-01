@@ -31,6 +31,7 @@ require (
 	github.com/semrush/zenrpc/v2 v2.1.1
 	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.9.4
+	github.com/smirkcat/hdwallet v0.0.0-20240926024445-aef02daf9a7d
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/spf13/viper v1.17.0
@@ -68,8 +69,6 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/consensys/gnark-crypto v0.18.1 // indirect
 	github.com/crate-crypto/go-eth-kzg v1.5.0 // indirect
-	github.com/crate-crypto/go-ipa v0.0.0-20240724233137-53bbb0ceb27a // indirect
-	github.com/crate-crypto/go-kzg-4844 v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
@@ -77,9 +76,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/ethereum/c-kzg-4844 v1.0.0 // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.6 // indirect
-	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/fjl/jsonw v0.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -97,7 +94,6 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/go-redis/redis v6.15.9+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
-	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
@@ -151,7 +147,6 @@ require (
 	github.com/schemalex/schemalex v0.1.2-0.20201120132426-1265e8bfd186 // indirect
 	github.com/shengdoushi/base58 v1.0.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/smirkcat/hdwallet v0.0.0-20240926024445-aef02daf9a7d // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/speps/go-hashids v2.0.0+incompatible // indirect
 	github.com/spf13/afero v1.11.0 // indirect
@@ -187,7 +182,6 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.4.4 // indirect
 	gorm.io/driver/sqlserver v1.4.1 // indirect

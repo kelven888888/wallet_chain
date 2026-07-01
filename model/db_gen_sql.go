@@ -3,8 +3,11 @@ package model
 import (
 	"context"
 	"fmt"
+	"gorm.io/gorm"
 	"reflect"
 	"strings"
+	admodel "wallet_chain.com/admin/model"
+	"wallet_chain.com/global"
 
 	"github.com/moremorefun/mcommon"
 )
@@ -114,66 +117,17 @@ func SQLCreateTAddressKeyDuplicate(ctx context.Context, tx mcommon.DbExeAble, ro
 }
 
 // SQLCreateManyTAddressKey 创建多个
-func SQLCreateManyTAddressKey(ctx context.Context, tx mcommon.DbExeAble, rows []*DBTAddressKey, isIgnore bool) (int64, error) {
+func SQLCreateManyTAddressKey(ctx context.Context, tx mcommon.DbExeAble, rows []*admodel.Account, isIgnore bool) (int64, error) {
 	if len(rows) == 0 {
 		return 0, nil
 	}
-	var args []interface{}
-	if rows[0].ID > 0 {
-		for _, row := range rows {
-			args = append(
-				args,
-				[]interface{}{
-					row.ID,
-					row.Symbol,
-					row.Address,
-					row.Pwd,
-					row.UseTag,
-				},
-			)
-		}
-	} else {
-		for _, row := range rows {
-			args = append(
-				args,
-				[]interface{}{
-					row.Symbol,
-					row.Address,
-					row.Pwd,
-					row.UseTag,
-				},
-			)
-		}
-	}
-	var count int64
-	var err error
-	query := strings.Builder{}
-	query.WriteString("INSERT ")
-	if isIgnore {
-		query.WriteString("IGNORE ")
-	}
-	query.WriteString("INTO t_address_key ( ")
-	if rows[0].ID > 0 {
-		query.WriteString("\nid,")
-	}
-	query.WriteString(`
-    symbol,
-    address,
-    pwd,
-    use_tag
-) VALUES
-    %s`)
-	count, err = mcommon.DbExecuteCountManyContent(
-		ctx,
-		tx,
-		query.String(),
-		len(rows),
-		args...,
-	)
+
+	count := len(rows)
+	err := global.SHOP_DB.Model(admodel.Account{}).CreateInBatches(&rows, int(count)).Error
 	if err != nil {
 		return 0, err
 	}
-	return count, nil
+	return int64(count), nil
 }
 
 // SQLCreateManyTAddressKeyDuplicate 创建多个
@@ -5110,99 +5064,18 @@ func SQLCreateTSendDuplicate(ctx context.Context, tx mcommon.DbExeAble, row *DBT
 }
 
 // SQLCreateManyTSend 创建多个
-func SQLCreateManyTSend(ctx context.Context, tx mcommon.DbExeAble, rows []*DBTSend, isIgnore bool) (int64, error) {
+func SQLCreateManyTSend(db *gorm.DB, rows []*admodel.TSend) (int64, error) {
 	if len(rows) == 0 {
 		return 0, nil
 	}
-	var args []interface{}
-	if rows[0].ID > 0 {
-		for _, row := range rows {
-			args = append(
-				args,
-				[]interface{}{
-					row.ID,
-					row.RelatedType,
-					row.RelatedID,
-					row.TokenID,
-					row.TxID,
-					row.FromAddress,
-					row.ToAddress,
-					row.BalanceReal,
-					row.Gas,
-					row.GasPrice,
-					row.Nonce,
-					row.Hex,
-					row.CreateTime,
-					row.HandleStatus,
-					row.HandleMsg,
-					row.HandleTime,
-				},
-			)
-		}
-	} else {
-		for _, row := range rows {
-			args = append(
-				args,
-				[]interface{}{
-					row.RelatedType,
-					row.RelatedID,
-					row.TokenID,
-					row.TxID,
-					row.FromAddress,
-					row.ToAddress,
-					row.BalanceReal,
-					row.Gas,
-					row.GasPrice,
-					row.Nonce,
-					row.Hex,
-					row.CreateTime,
-					row.HandleStatus,
-					row.HandleMsg,
-					row.HandleTime,
-				},
-			)
-		}
-	}
-	var count int64
-	var err error
-	query := strings.Builder{}
-	query.WriteString("INSERT ")
-	if isIgnore {
-		query.WriteString("IGNORE ")
-	}
-	query.WriteString("INTO t_send ( ")
-	if rows[0].ID > 0 {
-		query.WriteString("\nid,")
-	}
-	query.WriteString(`
-    related_type,
-    related_id,
-    token_id,
-    tx_id,
-    from_address,
-    to_address,
-    balance_real,
-    gas,
-    gas_price,
-    nonce,
-    hex,
-    create_time,
-    handle_status,
-    handle_msg,
-    handle_time
-) VALUES
-    %s`)
-	count, err = mcommon.DbExecuteCountManyContent(
-		ctx,
-		tx,
-		query.String(),
-		len(rows),
-		args...,
-	)
+	err := db.Model(admodel.TSend{}).CreateInBatches(&rows, len(rows)).Error
 	if err != nil {
+		global.SHOP_LOG.Error(err.Error())
+		db.Rollback()
 		return 0, err
 	}
-	return count, nil
+
+	return int64(len(rows)), nil
 }
 
 // SQLCreateManyTSendDuplicate 创建多个
@@ -9980,6 +9853,16 @@ func SQLCreateTTxErc20Duplicate(ctx context.Context, tx mcommon.DbExeAble, row *
 }
 
 // SQLCreateManyTTxErc20 创建多个
+func SQLCreateManyTTxErc20new(ctx context.Context, tx mcommon.DbExeAble, rows []*admodel.Transactions, isIgnore bool) (int64, error) {
+	if len(rows) == 0 {
+		return 0, nil
+	}
+	err := global.SHOP_DB.CreateInBatches(rows, len(rows)).Error
+	if err != nil {
+		return 0, err
+	}
+	return int64(len(rows)), nil
+}
 func SQLCreateManyTTxErc20(ctx context.Context, tx mcommon.DbExeAble, rows []*DBTTxErc20, isIgnore bool) (int64, error) {
 	if len(rows) == 0 {
 		return 0, nil

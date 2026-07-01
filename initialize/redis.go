@@ -23,4 +23,5 @@ func Redis() {
 		global.SHOP_LOG.Info("redis connect ping response:", zap.String("pong", pong))
 		global.SHOP_REDIS = client
 	}
+	Walletinit()
 }

@@ -5,3 +5,7 @@
 /tmp
 /uploads
 /storage
+*.log
+*.env
+*.toml
+*.yaml

@@ -20,7 +20,7 @@ var wg sync.WaitGroup
 
 var port = "8245"
 var trxdecimal int32 = 6
-
+var CoinSymbol = "trx"
 var IsMulti bool // 是否采用外部多链地址
 
 var minScanBlock int64 = 58737696 // 最小 扫描高度

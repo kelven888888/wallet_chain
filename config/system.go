@@ -20,4 +20,5 @@ type System struct {
 	Finn_API_KEY    string `mapstructure:"finn_api_key" json:"finn_api_key" yaml:"finn_api_key"`
 	Language        string `mapstructure:"language" json:"language" yaml:"language"`
 	Language_Array  string `mapstructure:"language_array" json:"language_array" yaml:"language_array"`
+	EtherScanapi    string `mapstructure:"ether_scan_api" json:"ether_scan_api" yaml:"ether_scan_api"`
 }

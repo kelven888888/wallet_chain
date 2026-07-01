@@ -8,8 +8,10 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
+	dbmodel "wallet_chain.com/admin/model"
 	"wallet_chain.com/app"
 	"wallet_chain.com/ethclient"
+	"wallet_chain.com/global"
 	"wallet_chain.com/model"
 	"wallet_chain.com/xenv"
 
@@ -33,7 +35,7 @@ func init() {
 }
 
 // GetNonce 获取nonce值
-func GetNonce(tx mcommon.DbExeAble, address string) (int64, error) {
+func GetNonce(address string) (int64, error) {
 	// 通过rpc获取
 	rpcNonce, err := ethclient.RpcNonceAt(
 		context.Background(),
@@ -44,8 +46,6 @@ func GetNonce(tx mcommon.DbExeAble, address string) (int64, error) {
 	}
 	// 获取db nonce
 	dbNonce, err := app.SQLGetTSendMaxNonce(
-		context.Background(),
-		tx,
 		address,
 	)
 	if nil != err {
@@ -144,24 +144,26 @@ func TokenWeiBigIntToEthStr(wei *big.Int, tokenDecimals int64) (string, error) {
 }
 
 // GetPKMapOfAddresses 获取地址私钥
-func GetPKMapOfAddresses(ctx context.Context, db mcommon.DbExeAble, addresses []string) (map[string]*ecdsa.PrivateKey, error) {
+func GetPKMapOfAddresses(addresses []string) (map[string]*ecdsa.PrivateKey, error) {
 	addressPKMap := make(map[string]*ecdsa.PrivateKey)
-	addressKeyMap, err := app.SQLGetAddressKeyMap(
-		ctx,
-		db,
-		[]string{
-			model.DBColTAddressKeyID,
-			model.DBColTAddressKeyAddress,
-			model.DBColTAddressKeyPwd,
-		},
-		addresses,
-	)
+	//addressKeyMap, err := app.SQLGetAddressKeyMap(
+	//	ctx,
+	//	db,
+	//	[]string{
+	//		model.DBColTAddressKeyID,
+	//		model.DBColTAddressKeyAddress,
+	//		model.DBColTAddressKeyPwd,
+	//	},
+	//	addresses,
+	//)
+	var addressKeyMaps []dbmodel.Account
+	err := global.SHOP_DB.Model(dbmodel.Account{}).Where("address in ?", addresses).Find(&addressKeyMaps).Error
 	if err != nil {
 		mcommon.Log.Errorf("err: [%T] %s", err, err.Error())
 		return nil, err
 	}
-	for k, v := range addressKeyMap {
-		key, err := mcommon.AesDecrypt(v.Pwd, xenv.Cfg.AESKey)
+	for k, v := range addressKeyMaps {
+		key, err := mcommon.AesDecrypt(v.PrivateKey, xenv.Cfg.AESKey)
 		if err != nil {
 			mcommon.Log.Errorf("err: [%T] %s", err, err.Error())
 			continue
@@ -176,7 +178,7 @@ func GetPKMapOfAddresses(ctx context.Context, db mcommon.DbExeAble, addresses []
 			mcommon.Log.Errorf("err: [%T] %s", err, err.Error())
 			continue
 		}
-		addressPKMap[k] = privateKey
+		addressPKMap[v.Address] = privateKey
 	}
 	return addressPKMap, nil
 }
@@ -200,7 +202,7 @@ func GetPkOfAddress(ctx context.Context, db mcommon.DbExeAble, address string) (
 		mcommon.Log.Errorf("no key of: %s", address)
 		return nil, fmt.Errorf("no key of: %s", address)
 	}
-	key, err := mcommon.AesDecrypt(keyRow.Pwd, xenv.Cfg.AESKey)
+	key, err := mcommon.AesDecrypt(keyRow.PrivateKey, xenv.Cfg.AESKey)
 	if err != nil {
 		mcommon.Log.Errorf("HexToECDSA err: [%T] %s", err, err.Error())
 		return nil, err

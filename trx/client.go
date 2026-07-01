@@ -316,7 +316,7 @@ func creataddress() (*model.Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	adderss := hdwallet.PrikeyToAddressTron(privateKey)
+	adderss := strings.ToLower(hdwallet.PrikeyToAddressTron(privateKey))
 	priEncrypt, err := hdwallet.StorePrivateKeyToDecrypt(privateKey, pwd)
 	if err != nil {
 		return nil, err
@@ -329,6 +329,37 @@ func creataddress() (*model.Account, error) {
 		User:       uuidv4,
 		Ctime:      time.Now().Unix(),
 		Amount:     0,
+	}
+	now := model.LocalTime(time.Now())
+	accountT.Model.CreatedAt = &now
+
+	_, err = dbengine.InsertAccount(accountT)
+	return accountT, err
+}
+func CreateHotAddresstrx() (*model.Account, error) {
+	var uuidv4 = hdwallet.GenPwd()
+	pwd := hdwallet.HashAndSalt([]byte(uuidv4))
+	index, privateKey, err := NewPrivateKey()
+	if err != nil {
+		return nil, err
+	}
+	adderss := strings.ToLower(hdwallet.PrikeyToAddressTron(privateKey))
+	priEncrypt, err := hdwallet.StorePrivateKeyToDecrypt(privateKey, pwd)
+	if err != nil {
+		return nil, err
+	}
+	accountT := &model.Account{
+		Address:    adderss,
+		Index:      index,
+		PrivateKey: priEncrypt,
+		PublicKey:  hdwallet.PubkeyToHexString(privateKey.Public().(*ecdsa.PublicKey)),
+		User:       uuidv4,
+		Ctime:      time.Now().Unix(),
+		Amount:     0,
+		Chain:      CoinSymbol,
+
+		Status:      -1,
+		AccountType: 2,
 	}
 	now := model.LocalTime(time.Now())
 	accountT.Model.CreatedAt = &now
